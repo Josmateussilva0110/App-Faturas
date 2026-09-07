@@ -19,6 +19,12 @@ class AppTextField extends StatelessWidget {
     this.onChanged,
     this.onSubmitted,
     this.autofocus = false,
+    this.focusNode,
+    this.textInputAction,
+    this.obscureText = false,
+    this.suffixIcon,
+    this.errorText,
+    this.enabled = true,
     this.fillColor,
     this.borderColor,
     this.focusedBorderColor,
@@ -38,6 +44,20 @@ class AppTextField extends StatelessWidget {
   final ValueChanged<String>? onChanged;
   final ValueChanged<String>? onSubmitted;
   final bool autofocus;
+  final FocusNode? focusNode;
+  final TextInputAction? textInputAction;
+
+  /// Hides the typed characters, for password fields.
+  final bool obscureText;
+
+  /// Widget rendered at the trailing edge *inside* the field (e.g. the
+  /// password visibility toggle).
+  final Widget? suffixIcon;
+
+  /// Validation message shown under the field; also turns its border red.
+  final String? errorText;
+
+  final bool enabled;
 
   /// Decoration overrides; left null to fall back to the app's shared
   /// [InputDecorationTheme].
@@ -76,11 +96,17 @@ class AppTextField extends StatelessWidget {
           controller: controller,
           keyboardType: keyboardType,
           autofocus: autofocus,
+          focusNode: focusNode,
+          textInputAction: textInputAction,
+          obscureText: obscureText,
+          enabled: enabled,
           onChanged: onChanged,
           onSubmitted: onSubmitted,
           decoration: InputDecoration(
             hintText: hintText,
             prefixText: prefixText,
+            suffixIcon: suffixIcon,
+            errorText: errorText,
             filled: fillColor != null ? true : null,
             fillColor: fillColor,
             enabledBorder: borderColor == null

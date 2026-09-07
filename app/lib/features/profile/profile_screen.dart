@@ -7,10 +7,12 @@ import '../../widgets/avatar_circle.dart';
 import '../../widgets/form_section_card.dart';
 import '../../widgets/section_label.dart';
 import '../../widgets/segmented_choice.dart';
+import '../onboarding/welcome_screen.dart';
 
 /// The "Perfil" tab: placeholder account info, theme choice, and sign out.
 /// The account fields are static today — they'll come from the backend's
-/// auth session once one exists.
+/// auth session once one exists. "Sair da conta" only returns to the welcome
+/// screen for now; there's no session to actually revoke yet.
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
 
@@ -68,8 +70,9 @@ class ProfileScreen extends StatelessWidget {
           SizedBox(
             width: double.infinity,
             child: OutlinedButton.icon(
-              onPressed: () => ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Disponível quando houver login.')),
+              onPressed: () => Navigator.of(context).pushAndRemoveUntil(
+                MaterialPageRoute(builder: (_) => const WelcomeScreen()),
+                (route) => false,
               ),
               style: OutlinedButton.styleFrom(
                 foregroundColor: scheme.error,

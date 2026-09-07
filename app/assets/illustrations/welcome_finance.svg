@@ -1,0 +1,48 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 260" fill="none">
+  <!-- Illustration for the welcome screen. Shapes that must adapt to the
+       app's light/dark theme use `currentColor` (fed by SvgTheme); the brand
+       accents below match the seed color #297CEF and the section hues in
+       core/theme/app_colors.dart. -->
+
+  <!-- Soft background blobs -->
+  <circle cx="72" cy="62" r="46" fill="#297CEF" opacity="0.10"/>
+  <circle cx="311" cy="209" r="31" fill="#21A97C" opacity="0.14"/>
+  <circle cx="330" cy="72" r="9" fill="#F0A925" opacity="0.55"/>
+  <circle cx="34" cy="188" r="6" fill="#8A63E0" opacity="0.5"/>
+
+  <!-- Floating chart card -->
+  <rect x="196" y="26" width="140" height="104" rx="16"
+        fill="currentColor" fill-opacity="0.05"
+        stroke="currentColor" stroke-opacity="0.15" stroke-width="1.5"/>
+  <rect x="214" y="44" width="58" height="8" rx="4" fill="currentColor" fill-opacity="0.24"/>
+  <rect x="214" y="58" width="36" height="6" rx="3" fill="currentColor" fill-opacity="0.12"/>
+  <rect x="214" y="90" width="16" height="22" rx="5" fill="#7FB0F7"/>
+  <rect x="240" y="76" width="16" height="36" rx="5" fill="#297CEF"/>
+  <rect x="266" y="60" width="16" height="52" rx="5" fill="#21A97C"/>
+  <rect x="292" y="82" width="16" height="30" rx="5" fill="#F0A925"/>
+
+  <!-- Cards tucked into the wallet -->
+  <g transform="rotate(-9 132 132)">
+    <rect x="76" y="100" width="112" height="66" rx="12" fill="#21A97C"/>
+    <rect x="88" y="116" width="30" height="8" rx="4" fill="#FFFFFF" fill-opacity="0.75"/>
+    <rect x="88" y="132" width="52" height="6" rx="3" fill="#FFFFFF" fill-opacity="0.45"/>
+  </g>
+  <g transform="rotate(6 158 126)">
+    <rect x="104" y="92" width="112" height="66" rx="12" fill="#F0A925"/>
+    <rect x="116" y="108" width="30" height="8" rx="4" fill="#FFFFFF" fill-opacity="0.8"/>
+    <rect x="116" y="124" width="52" height="6" rx="3" fill="#FFFFFF" fill-opacity="0.5"/>
+  </g>
+
+  <!-- Wallet -->
+  <rect x="44" y="140" width="188" height="100" rx="22" fill="#297CEF"/>
+  <path d="M44 178h188v40a22 22 0 0 1-22 22H66a22 22 0 0 1-22-22v-40z" fill="#1E63C4"/>
+  <rect x="176" y="176" width="56" height="34" rx="17" fill="#164F9F"/>
+  <circle cx="204" cy="193" r="9" fill="#D7E7FD"/>
+
+  <!-- Coins -->
+  <circle cx="264" cy="168" r="21" fill="#F0A925"/>
+  <circle cx="264" cy="168" r="13" fill="#FFCE68"/>
+  <rect x="261" y="159" width="6" height="18" rx="3" fill="#D98E12"/>
+  <circle cx="299" cy="200" r="14" fill="#F0A925"/>
+  <circle cx="299" cy="200" r="8" fill="#FFCE68"/>
+</svg>
