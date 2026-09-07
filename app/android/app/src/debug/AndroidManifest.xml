@@ -4,4 +4,9 @@
          to allow setting breakpoints, to provide hot reload, etc.
     -->
     <uses-permission android:name="android.permission.INTERNET"/>
+
+    <!-- Debug only: the dev backend is plain HTTP (http://10.0.2.2:3001),
+         which Android blocks by default since API 28. Release builds are
+         unaffected — this manifest is merged into debug builds alone. -->
+    <application android:usesCleartextTraffic="true"/>
 </manifest>

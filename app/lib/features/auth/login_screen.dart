@@ -2,16 +2,19 @@ import 'package:flutter/material.dart';
 
 import '../../core/theme/app_spacing.dart';
 import '../../core/toast/app_toast.dart';
+import '../../data/api/api_response.dart';
+import '../../data/services/auth_service.dart';
 import '../../widgets/app_illustration.dart';
 import '../../widgets/app_text_field.dart';
 import '../../widgets/form_section_card.dart';
 import '../shell/app_entry.dart';
 
-/// Email + password sign in. The credentials aren't checked against anything
-/// yet — the app still runs on `MockFaturaRepository`, so a valid-looking
-/// form just drops the user into the app. Swapping `_submit` for a call to
-/// the backend's `POST /api/login` is the only change needed once the HTTP
-/// client exists.
+/// Email + password sign in against the backend's `POST /api/login`.
+///
+/// A successful login starts the session (`startSession`), so every later
+/// call made through `requestData` carries the token — and gets refreshed
+/// automatically when it expires. The app's *data* still comes from
+/// `MockFaturaRepository`; only auth is wired to the API.
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
 
@@ -61,8 +64,24 @@ class _LoginScreenState extends State<LoginScreen> {
     if (_submitting || !_validate()) return;
 
     setState(() => _submitting = true);
-    // Stand-in for the network round trip, so the loading state is real.
-    await Future<void>.delayed(const Duration(milliseconds: 600));
+
+    final response = await loginUser(
+      email: _emailController.text.trim(),
+      password: _passwordController.text,
+    );
+    if (!mounted) return;
+
+    final session = response.data;
+    if (!response.success || session == null) {
+      setState(() {
+        _submitting = false;
+        _applyFieldErrors(response.errors);
+      });
+      AppToast.error(response.message);
+      return;
+    }
+
+    await startSession(session);
     if (!mounted) return;
 
     AppToast.success('Bem-vindo de volta!');
@@ -70,6 +89,38 @@ class _LoginScreenState extends State<LoginScreen> {
       MaterialPageRoute(builder: (_) => const AppEntry()),
       (route) => false,
     );
+  }
+
+  /// The backend answers a 422 pointing at the offending field; show it
+  /// under that input instead of only inside the toast.
+  void _applyFieldErrors(List<ApiFieldError> errors) {
+    for (final error in errors) {
+      if (error.field == 'email') _emailError = error.message;
+      if (error.field == 'password') _passwordError = error.message;
+    }
+  }
+
+  /// `POST /auth/password-reset-request` — there's no self-service reset
+  /// link; the backend registers the request and the team makes contact.
+  Future<void> _requestReset() async {
+    final email = _emailController.text.trim();
+    if (email.isEmpty) {
+      setState(() => _emailError = 'Informe seu email para recuperar a senha.');
+      return;
+    }
+
+    setState(() => _submitting = true);
+    final response = await requestPasswordReset(email);
+    if (!mounted) return;
+    setState(() => _submitting = false);
+
+    if (response.success) {
+      AppToast.success(
+        response.message.isEmpty ? 'Solicitação enviada.' : response.message,
+      );
+    } else {
+      AppToast.error(response.message);
+    }
   }
 
   @override
@@ -161,11 +212,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     Align(
                       alignment: Alignment.centerRight,
                       child: TextButton(
-                        onPressed: _submitting
-                            ? null
-                            : () => AppToast.warning(
-                                  'Recuperação de senha estará disponível com o login integrado.',
-                                ),
+                        onPressed: _submitting ? null : _requestReset,
                         child: const Text('Esqueci minha senha'),
                       ),
                     ),

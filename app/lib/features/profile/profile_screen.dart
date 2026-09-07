@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../core/theme/app_spacing.dart';
+import '../../data/services/auth_service.dart';
 import '../../state/app_state.dart';
 import '../../widgets/avatar_circle.dart';
 import '../../widgets/form_section_card.dart';
@@ -11,8 +12,9 @@ import '../onboarding/welcome_screen.dart';
 
 /// The "Perfil" tab: placeholder account info, theme choice, and sign out.
 /// The account fields are static today — they'll come from the backend's
-/// auth session once one exists. "Sair da conta" only returns to the welcome
-/// screen for now; there's no session to actually revoke yet.
+/// auth session once one exists. "Sair da conta" revokes the token on the
+/// backend and drops the local session before returning to the welcome
+/// screen.
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
 
@@ -70,10 +72,18 @@ class ProfileScreen extends StatelessWidget {
           SizedBox(
             width: double.infinity,
             child: OutlinedButton.icon(
-              onPressed: () => Navigator.of(context).pushAndRemoveUntil(
-                MaterialPageRoute(builder: (_) => const WelcomeScreen()),
-                (route) => false,
-              ),
+              onPressed: () async {
+                // Best effort: even if the revoke call fails (offline, token
+                // already expired), the local session must still go.
+                await logoutUser();
+                await endSession();
+                if (!context.mounted) return;
+
+                Navigator.of(context).pushAndRemoveUntil(
+                  MaterialPageRoute(builder: (_) => const WelcomeScreen()),
+                  (route) => false,
+                );
+              },
               style: OutlinedButton.styleFrom(
                 foregroundColor: scheme.error,
                 alignment: Alignment.centerLeft,

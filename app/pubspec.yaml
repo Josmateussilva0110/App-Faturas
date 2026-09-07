@@ -47,6 +47,9 @@ dependencies:
   # SVG illustrations on the welcome/login screens
   flutter_svg: ^2.0.10
 
+  # HTTP client for the backend API (interceptors for auth + token refresh)
+  dio: ^5.7.0
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
