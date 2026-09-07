@@ -1,0 +1,54 @@
+# ---- General ----
+.DS_Store
+Thumbs.db
+*.log
+*.tmp
+.vscode/
+.idea/
+*.iml
+*.ipr
+*.iws
+
+# Environment files (never commit secrets)
+.env
+.env.*
+!.env.example
+
+# ---- Backend (Node / Express / TypeScript) ----
+**/node_modules/
+backend/dist/
+backend/build/
+backend/coverage/
+backend/*.tsbuildinfo
+backend/npm-debug.log*
+backend/yarn-debug.log*
+backend/yarn-error.log*
+backend/pnpm-debug.log*
+backend/.pnpm-store/
+
+# ---- Frontend (Flutter app) ----
+app/.dart_tool/
+app/.flutter-plugins
+app/.flutter-plugins-dependencies
+app/.packages
+app/.pub-cache/
+app/.pub/
+app/build/
+app/coverage/
+
+# Android
+app/android/.gradle/
+app/android/local.properties
+app/android/key.properties
+app/android/**/*.keystore
+app/android/**/*.jks
+app/android/app/debug/
+app/android/app/profile/
+app/android/app/release/
+
+# iOS
+app/ios/Pods/
+app/ios/.symlinks/
+app/ios/Flutter/Flutter.framework
+app/ios/Flutter/Flutter.podspec
+app/ios/Flutter/flutter_export_environment.sh
