@@ -1,28 +1,35 @@
 import 'package:flutter/material.dart';
 
-/// Small uppercase section heading, e.g. "COMPRAS ATIVAS".
+/// Small section heading, uppercase by default (e.g. "COMPRAS ATIVAS").
+/// Pass [uppercase]: false for contexts that want sentence case instead
+/// (e.g. "Quem comprou"). The text always stays a muted gray; pass
+/// [iconColor] to tint just the icon (e.g. `AppColors.iconTint(...)`) so
+/// sections read as color-coded without the label itself shouting.
 class SectionLabel extends StatelessWidget {
-  const SectionLabel(this.text, {super.key, this.icon});
+  const SectionLabel(this.text, {super.key, this.icon, this.uppercase = true, this.iconColor});
 
   final String text;
   final IconData? icon;
+  final bool uppercase;
+  final Color? iconColor;
 
   @override
   Widget build(BuildContext context) {
-    final color = Theme.of(context).colorScheme.onSurfaceVariant;
+    final textColor = Theme.of(context).colorScheme.onSurfaceVariant;
     final style = TextStyle(
       fontWeight: FontWeight.w700,
       fontSize: 13,
-      letterSpacing: 0.05,
-      color: color,
+      letterSpacing: uppercase ? 0.05 : 0,
+      color: textColor,
     );
-    if (icon == null) return Text(text.toUpperCase(), style: style);
+    final label = uppercase ? text.toUpperCase() : text;
+    if (icon == null) return Text(label, style: style);
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Icon(icon, size: 14, color: color),
+        Icon(icon, size: 14, color: iconColor ?? textColor),
         const SizedBox(width: 6),
-        Text(text.toUpperCase(), style: style),
+        Text(label, style: style),
       ],
     );
   }

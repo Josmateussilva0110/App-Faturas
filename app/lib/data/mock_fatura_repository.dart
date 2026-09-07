@@ -1,4 +1,5 @@
 import '../core/utils/formatters.dart';
+import '../models/app_user.dart';
 import '../models/card_model.dart';
 import '../models/expense.dart';
 import '../models/purchase.dart';
@@ -81,6 +82,8 @@ class MockFaturaRepository implements FaturaRepository {
   final List<Purchase> _purchases = [];
   final List<Salary> _salaries = [];
   final List<Expense> _expenses = [];
+  double? _spendingLimit;
+  final _currentUser = const AppUser(id: 'u1', name: 'Você', email: 'voce@email.com');
 
   int _nextId = 1000;
   String _generateId(String prefix) => '$prefix${_nextId++}';
@@ -194,5 +197,23 @@ class MockFaturaRepository implements FaturaRepository {
   Future<void> removeExpense(String id) async {
     await _simulateLatency();
     _expenses.removeWhere((e) => e.id == id);
+  }
+
+  @override
+  Future<double?> fetchSpendingLimit() async {
+    await _simulateLatency();
+    return _spendingLimit;
+  }
+
+  @override
+  Future<void> setSpendingLimit(double? limit) async {
+    await _simulateLatency();
+    _spendingLimit = limit;
+  }
+
+  @override
+  Future<AppUser> fetchCurrentUser() async {
+    await _simulateLatency();
+    return _currentUser;
   }
 }

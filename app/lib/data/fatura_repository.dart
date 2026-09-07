@@ -1,3 +1,4 @@
+import '../models/app_user.dart';
 import '../models/card_model.dart';
 import '../models/expense.dart';
 import '../models/purchase.dart';
@@ -27,4 +28,13 @@ abstract class FaturaRepository {
   Future<List<Expense>> fetchExpenses();
   Future<Expense> addExpense(String name, double value);
   Future<void> removeExpense(String id);
+
+  /// The user's monthly spending goal for their own card purchases (`null`
+  /// when none is set). Purchases made by other people don't count toward
+  /// it, so this is intentionally separate from any per-card credit limit.
+  Future<double?> fetchSpendingLimit();
+  Future<void> setSpendingLimit(double? limit);
+
+  /// The logged-in user, shown on the Profile screen.
+  Future<AppUser> fetchCurrentUser();
 }

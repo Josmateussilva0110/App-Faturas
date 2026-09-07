@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import 'core/theme/app_theme.dart';
+import 'core/toast/app_toast.dart';
 import 'data/mock_fatura_repository.dart';
 import 'features/shell/app_shell.dart';
 import 'state/app_state.dart';
@@ -22,6 +23,7 @@ class FaturaApp extends StatelessWidget {
           return MaterialApp(
             title: 'Fatura',
             debugShowCheckedModeBanner: false,
+            navigatorKey: AppToast.navigatorKey,
             theme: AppTheme.light(),
             darkTheme: AppTheme.dark(),
             themeMode: appState.themeMode,

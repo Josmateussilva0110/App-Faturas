@@ -1,16 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_spacing.dart';
+import '../../core/toast/app_toast.dart';
 import '../../core/utils/formatters.dart';
 import '../../state/app_state.dart';
 import '../../widgets/app_card.dart';
 import '../../widgets/empty_state.dart';
+import '../../widgets/icon_badge.dart';
 import '../../widgets/purchase_tile.dart';
 import '../../widgets/section_label.dart';
 import '../../widgets/total_card.dart';
 import '../deposit/deposit_screen.dart';
 import '../purchase_form/edit_purchase_dialog.dart';
+import 'widgets/spending_limit_dialog.dart';
 
 /// The "Início" tab: this month's total, a shortcut to the deposit
 /// calculator, and the list of purchases currently being paid off.
@@ -21,6 +25,8 @@ class HomeScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final appState = context.watch<AppState>();
     final entries = appState.homeEntries;
+    final dark = Theme.of(context).brightness == Brightness.dark;
+    final savingsColor = AppColors.iconTint(AppColors.hueSavings, dark: dark);
 
     return Scaffold(
       appBar: AppBar(
@@ -50,6 +56,22 @@ class HomeScreen extends StatelessWidget {
             value: formatMoney(appState.homeTotal),
             meta: entries.length == 1 ? '1 compra ativa' : '${entries.length} compras ativas',
             icon: Icons.trending_up,
+            goalProgress: appState.spendingGoalRatio,
+            goalLabel: appState.spendingGoalRatio == null
+                ? null
+                : 'Limite utilizado: ${(appState.spendingGoalRatio! * 100).round()}%',
+            onTapGoal: () => showSpendingLimitDialog(
+              context,
+              currentLimit: appState.spendingLimit,
+              onSave: (limit) async {
+                try {
+                  await context.read<AppState>().setSpendingLimit(limit);
+                  AppToast.success(limit == null ? 'Meta de gastos removida.' : 'Meta de gastos definida.');
+                } catch (_) {
+                  AppToast.error('Não foi possível salvar a meta.');
+                }
+              },
+            ),
           ),
           const SizedBox(height: AppSpacing.lg),
           AppCard(
@@ -58,20 +80,7 @@ class HomeScreen extends StatelessWidget {
             ),
             child: Row(
               children: [
-                Container(
-                  width: 36,
-                  height: 36,
-                  alignment: Alignment.center,
-                  decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.primaryContainer,
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(
-                    Icons.savings_outlined,
-                    size: 18,
-                    color: Theme.of(context).colorScheme.onPrimaryContainer,
-                  ),
-                ),
+                IconBadge(icon: Icons.savings_outlined, color: savingsColor),
                 const SizedBox(width: 12),
                 const Expanded(
                   child: Text('Depositar', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15)),
@@ -82,7 +91,11 @@ class HomeScreen extends StatelessWidget {
             ),
           ),
           const SizedBox(height: AppSpacing.lg),
-          const SectionLabel('Compras ativas', icon: Icons.receipt_long_outlined),
+          SectionLabel(
+            'Compras ativas',
+            icon: Icons.receipt_long_outlined,
+            iconColor: Theme.of(context).colorScheme.primary,
+          ),
           const SizedBox(height: AppSpacing.sm),
           if (entries.isEmpty)
             const EmptyState(

@@ -6,6 +6,7 @@ import '../../core/utils/formatters.dart';
 import '../../state/app_state.dart';
 import '../../widgets/empty_state.dart';
 import '../../widgets/purchase_tile.dart';
+import '../../widgets/section_label.dart';
 import '../../widgets/total_card.dart';
 import '../purchase_form/edit_purchase_dialog.dart';
 
@@ -48,6 +49,12 @@ class MonthlyScreen extends StatelessWidget {
             valueFontSize: 26,
           ),
           const SizedBox(height: AppSpacing.lg),
+          SectionLabel(
+            'Parcelas do mês',
+            icon: Icons.receipt_long_outlined,
+            iconColor: Theme.of(context).colorScheme.primary,
+          ),
+          const SizedBox(height: AppSpacing.sm),
           if (entries.isEmpty)
             const EmptyState(message: 'Nenhuma parcela neste mês.')
           else

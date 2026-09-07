@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../core/utils/formatters.dart';
 import '../data/fatura_repository.dart';
+import '../models/app_user.dart';
 import '../models/card_model.dart';
 import '../models/expense.dart';
 import '../models/purchase.dart';
@@ -42,18 +43,36 @@ class AppState extends ChangeNotifier {
   List<Salary> salaries = [];
   List<Expense> expenses = [];
 
+  /// The user's monthly spending goal, or `null` when none is set.
+  double? spendingLimit;
+
+  /// The logged-in user. Populated by [load]; only read once [isLoading] is
+  /// false, since every screen that shows it sits behind that gate.
+  late AppUser currentUser;
+
   Future<void> load() async {
     final results = await Future.wait([
       _repository.fetchCards(),
       _repository.fetchPurchases(),
       _repository.fetchSalaries(),
       _repository.fetchExpenses(),
+      _repository.fetchSpendingLimit(),
+      _repository.fetchCurrentUser(),
     ]);
     cards = results[0] as List<CardModel>;
     purchases = results[1] as List<Purchase>;
     salaries = results[2] as List<Salary>;
     expenses = results[3] as List<Expense>;
+    spendingLimit = results[4] as double?;
+    currentUser = results[5] as AppUser;
     isLoading = false;
+    notifyListeners();
+  }
+
+  // ── Spending goal ────────────────────────────────────────────────────
+  Future<void> setSpendingLimit(double? limit) async {
+    await _repository.setSpendingLimit(limit);
+    spendingLimit = limit;
     notifyListeners();
   }
 
@@ -112,6 +131,23 @@ class AppState extends ChangeNotifier {
   List<PurchaseEntry> get homeEntries => activePurchases(0);
   double get homeTotal => totalFor(0);
 
+  /// Total considering only the user's own purchases for [offset] months
+  /// from now — other people's purchases on the card don't count toward the
+  /// spending goal or the deposit calculator.
+  double ownTotalFor(int offset) =>
+      activePurchases(offset).where((e) => !e.purchase.isOther).fold(0.0, (sum, e) => sum + e.purchase.amount);
+
+  /// This month's total considering only the user's own purchases.
+  double get homeOwnTotal => ownTotalFor(0);
+
+  /// Fraction of [spendingLimit] used by [homeOwnTotal] (can exceed 1 when
+  /// over the goal), or `null` when no goal is set.
+  double? get spendingGoalRatio {
+    final limit = spendingLimit;
+    if (limit == null || limit <= 0) return null;
+    return homeOwnTotal / limit;
+  }
+
   /// The Monthly screen's active purchases and total, for [monthOffset].
   List<PurchaseEntry> get monthlyEntries => activePurchases(monthOffset);
   double get monthlyTotal => totalFor(monthOffset);
@@ -135,9 +171,11 @@ class AppState extends ChangeNotifier {
   }
 
   // ── People ───────────────────────────────────────────────────────────
-  List<PersonSummary> get personSummaries {
+  /// Per-person totals for [offset] months from now — lets the People
+  /// screen browse upcoming (or past) months the same way Deposit does.
+  List<PersonSummary> personSummariesFor(int offset) {
     final totals = <String, double>{};
-    for (final e in homeEntries) {
+    for (final e in activePurchases(offset)) {
       totals[e.purchase.personLabel] = (totals[e.purchase.personLabel] ?? 0) + e.purchase.amount;
     }
     final list = totals.entries.map((e) => PersonSummary(label: e.key, total: e.value)).toList()
@@ -145,18 +183,28 @@ class AppState extends ChangeNotifier {
     return list;
   }
 
-  List<PurchaseEntry> transactionsForPerson(String label) =>
-      homeEntries.where((e) => e.purchase.personLabel == label).toList();
+  List<PersonSummary> get personSummaries => personSummariesFor(0);
+
+  List<PurchaseEntry> transactionsForPersonFor(int offset, String label) =>
+      activePurchases(offset).where((e) => e.purchase.personLabel == label).toList();
+
+  List<PurchaseEntry> transactionsForPerson(String label) => transactionsForPersonFor(0, label);
 
   double get grandTotal => homeTotal;
 
   // ── Deposit (salaries / expenses) ───────────────────────────────────
+  // Salaries and fixed expenses are a flat recurring budget (no month of
+  // their own); only the credit card total changes per month, so that's the
+  // only piece these take an [offset] for. Only the user's own card
+  // purchases count against savings — other people's purchases are their
+  // own to pay back, not the user's.
   double get totalSalaries => salaries.fold(0.0, (sum, s) => sum + s.value);
-  double get afterCredit => totalSalaries - grandTotal;
+  double afterCreditFor(int offset) => totalSalaries - ownTotalFor(offset);
+  double get afterCredit => afterCreditFor(0);
 
-  List<ExpenseRow> get expenseRows {
+  List<ExpenseRow> expenseRowsFor(int offset) {
     final rows = <ExpenseRow>[];
-    var running = afterCredit;
+    var running = afterCreditFor(offset);
     for (final expense in expenses) {
       running -= expense.value;
       rows.add(ExpenseRow(expense: expense, runningBalance: running));
@@ -164,7 +212,14 @@ class AppState extends ChangeNotifier {
     return rows;
   }
 
-  double get guardar => expenseRows.isEmpty ? afterCredit : expenseRows.last.runningBalance;
+  List<ExpenseRow> get expenseRows => expenseRowsFor(0);
+
+  double guardarFor(int offset) {
+    final rows = expenseRowsFor(offset);
+    return rows.isEmpty ? afterCreditFor(offset) : rows.last.runningBalance;
+  }
+
+  double get guardar => guardarFor(0);
 
   Future<void> addSalary(String name, double value) async {
     final created = await _repository.addSalary(name, value);

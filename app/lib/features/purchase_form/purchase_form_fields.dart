@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 
+import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_spacing.dart';
 import '../../core/utils/formatters.dart';
 import '../../models/card_model.dart';
 import '../../widgets/app_text_field.dart';
+import '../../widgets/form_section_card.dart';
 import '../../widgets/section_label.dart';
 import '../../widgets/segmented_choice.dart';
 import 'purchase_form_values.dart';
@@ -96,107 +98,181 @@ class _PurchaseFormFieldsState extends State<PurchaseFormFields> {
   @override
   Widget build(BuildContext context) {
     final monthLabel = formatMonthLabel(currentAbsoluteMonth() + _startOffset);
+    final scheme = Theme.of(context).colorScheme;
+    final dark = Theme.of(context).brightness == Brightness.dark;
+
+    // Softer, whiter input look used only in this form: light border that
+    // turns blue on focus, instead of the app-wide input theme.
+    final fieldFill = dark ? scheme.surfaceContainerHigh : Colors.white;
+    final fieldBorder = dark ? scheme.outlineVariant : const Color(0xFFE2E8F0);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
-        const SectionLabel('Quem comprou'),
-        const SizedBox(height: AppSpacing.sm),
-        Align(
-          alignment: Alignment.centerLeft,
-          child: SegmentedChoice<bool>(
-            value: _isOther,
-            options: const [(false, 'Minha compra'), (true, 'De outra pessoa')],
-            onChanged: (v) => setState(() => _isOther = v),
+        FormSectionCard(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const SectionLabel('Quem comprou', uppercase: false),
+              const SizedBox(height: AppSpacing.sm),
+              SegmentedChoice<bool>(
+                value: _isOther,
+                options: const [(false, 'Minha compra'), (true, 'De outra pessoa')],
+                onChanged: (v) => setState(() => _isOther = v),
+                expand: true,
+              ),
+              if (_isOther) ...[
+                const SizedBox(height: AppSpacing.lg),
+                AppTextField(
+                  label: 'Nome da pessoa',
+                  icon: Icons.person_outline,
+                  controller: _personController,
+                  hintText: 'Ex: Maria',
+                  fillColor: fieldFill,
+                  borderColor: fieldBorder,
+                  focusedBorderColor: scheme.primary,
+                  onChanged: (_) => setState(() {}),
+                ),
+              ],
+            ],
           ),
-        ),
-        if (_isOther) ...[
-          const SizedBox(height: AppSpacing.lg),
-          AppTextField(
-            label: 'Nome da pessoa',
-            icon: Icons.person_outline,
-            controller: _personController,
-            hintText: 'Ex: Maria',
-            onChanged: (_) => setState(() {}),
-          ),
-        ],
-        const SizedBox(height: AppSpacing.xl),
-        Divider(height: AppSpacing.xl),
-        const SectionLabel('Detalhes da compra'),
-        const SizedBox(height: AppSpacing.sm),
-        AppTextField(
-          label: _isOther ? 'Descrição da compra' : 'Item ou conta',
-          icon: Icons.local_offer_outlined,
-          controller: _nameController,
-          hintText: 'Ex: Notebook Dell',
-          onChanged: (_) => setState(() {}),
         ),
         const SizedBox(height: AppSpacing.lg),
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Expanded(
-              child: AppTextField(
-                label: 'Valor da parcela',
-                icon: Icons.attach_money,
-                controller: _amountController,
-                keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                hintText: '0,00',
+        FormSectionCard(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              SectionLabel(
+                'Detalhes da compra',
+                icon: Icons.local_offer_outlined,
+                iconColor: scheme.primary,
+                uppercase: false,
+              ),
+              const SizedBox(height: AppSpacing.sm),
+              AppTextField(
+                label: _isOther ? 'Descrição da compra' : 'Item ou conta',
+                controller: _nameController,
+                hintText: 'Ex: Notebook Dell',
+                fillColor: fieldFill,
+                borderColor: fieldBorder,
+                focusedBorderColor: scheme.primary,
                 onChanged: (_) => setState(() {}),
               ),
-            ),
-            const SizedBox(width: AppSpacing.md),
-            Expanded(
-              child: AppTextField(
-                label: 'Nº de parcelas',
-                icon: Icons.format_list_numbered,
-                controller: _installmentsController,
-                keyboardType: TextInputType.number,
-                hintText: '1',
-                onChanged: (_) => setState(() {}),
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: AppSpacing.xl),
-        Divider(height: AppSpacing.xl),
-        const SectionLabel('Quando começa'),
-        const SizedBox(height: AppSpacing.sm),
-        Row(
-          children: [
-            IconButton.outlined(
-              onPressed: () => setState(() => _startOffset -= 1),
-              icon: const Icon(Icons.chevron_left),
-            ),
-            Expanded(
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
+              const SizedBox(height: AppSpacing.lg),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Icon(Icons.event_outlined, size: 18, color: Theme.of(context).colorScheme.onSurfaceVariant),
-                  const SizedBox(width: 6),
-                  Text(
-                    monthLabel,
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(fontWeight: FontWeight.w600),
+                  Expanded(
+                    child: AppTextField(
+                      label: 'Valor da parcela',
+                      icon: Icons.attach_money,
+                      prefixText: 'R\$ ',
+                      controller: _amountController,
+                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                      hintText: '0,00',
+                      fillColor: fieldFill,
+                      borderColor: fieldBorder,
+                      focusedBorderColor: scheme.primary,
+                      onChanged: (_) => setState(() {}),
+                    ),
+                  ),
+                  const SizedBox(width: AppSpacing.md),
+                  Expanded(
+                    child: AppTextField(
+                      label: 'Nº de parcelas',
+                      icon: Icons.format_list_numbered,
+                      controller: _installmentsController,
+                      keyboardType: TextInputType.number,
+                      hintText: '1',
+                      fillColor: fieldFill,
+                      borderColor: fieldBorder,
+                      focusedBorderColor: scheme.primary,
+                      onChanged: (_) => setState(() {}),
+                    ),
                   ),
                 ],
               ),
-            ),
-            IconButton.outlined(
-              onPressed: () => setState(() => _startOffset += 1),
-              icon: const Icon(Icons.chevron_right),
-            ),
-          ],
+            ],
+          ),
         ),
-        const SizedBox(height: AppSpacing.xl),
-        Divider(height: AppSpacing.xl),
-        const SectionLabel('Pagamento', icon: Icons.credit_card_outlined),
-        const SizedBox(height: AppSpacing.sm),
-        CardChoiceChips(
-          cards: widget.cards,
-          selectedId: _cardId,
-          onSelect: (id) => setState(() => _cardId = id),
+        const SizedBox(height: AppSpacing.lg),
+        FormSectionCard(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const SectionLabel('Quando começa', uppercase: false),
+              const SizedBox(height: AppSpacing.sm),
+              Container(
+                height: 48,
+                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
+                decoration: BoxDecoration(
+                  color: fieldFill,
+                  borderRadius: BorderRadius.circular(AppRadius.md),
+                  border: Border.all(color: fieldBorder),
+                ),
+                child: Row(
+                  children: [
+                    IconButton(
+                      onPressed: () => setState(() => _startOffset -= 1),
+                      icon: const Icon(Icons.chevron_left),
+                      visualDensity: VisualDensity.compact,
+                      constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                      padding: EdgeInsets.zero,
+                    ),
+                    Expanded(
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.calendar_today_outlined, size: 16, color: scheme.onSurfaceVariant),
+                          const SizedBox(width: 8),
+                          Flexible(
+                            child: Text(
+                              monthLabel,
+                              overflow: TextOverflow.ellipsis,
+                              maxLines: 1,
+                              style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    IconButton(
+                      onPressed: () => setState(() => _startOffset += 1),
+                      icon: const Icon(Icons.chevron_right),
+                      visualDensity: VisualDensity.compact,
+                      constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                      padding: EdgeInsets.zero,
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: AppSpacing.lg),
+        FormSectionCard(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              SectionLabel(
+                'Pagamento',
+                icon: Icons.credit_card_outlined,
+                iconColor: AppColors.iconTint(AppColors.hueCards, dark: dark),
+                uppercase: false,
+              ),
+              const SizedBox(height: AppSpacing.sm),
+              CardChoiceChips(
+                cards: widget.cards,
+                selectedId: _cardId,
+                onSelect: (id) => setState(() => _cardId = id),
+              ),
+            ],
+          ),
         ),
         const SizedBox(height: AppSpacing.xl),
         SizedBox(

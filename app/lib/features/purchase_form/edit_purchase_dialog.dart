@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../core/theme/app_spacing.dart';
+import '../../core/toast/app_toast.dart';
 import '../../models/purchase.dart';
 import '../../state/app_state.dart';
 import '../../widgets/confirm_delete_dialog.dart';
@@ -61,16 +62,21 @@ class EditPurchaseDialog extends StatelessWidget {
                   initialStartOffset: purchase.startAbs - appState.currentAbs,
                   initialCardId: purchase.cardId,
                   onSubmit: (values) async {
-                    await context.read<AppState>().updatePurchase(purchase.copyWith(
-                          name: values.name,
-                          amount: values.amount,
-                          installments: values.installments,
-                          isOther: values.isOther,
-                          person: values.person,
-                          cardId: values.cardId,
-                          startAbs: appState.currentAbs + values.startOffset,
-                        ));
-                    if (context.mounted) Navigator.of(context).pop();
+                    try {
+                      await context.read<AppState>().updatePurchase(purchase.copyWith(
+                            name: values.name,
+                            amount: values.amount,
+                            installments: values.installments,
+                            isOther: values.isOther,
+                            person: values.person,
+                            cardId: values.cardId,
+                            startAbs: appState.currentAbs + values.startOffset,
+                          ));
+                      if (context.mounted) Navigator.of(context).pop();
+                      AppToast.success('Compra atualizada.');
+                    } catch (_) {
+                      AppToast.error('Não foi possível salvar as alterações.');
+                    }
                   },
                   trailing: SizedBox(
                     width: double.infinity,
@@ -81,9 +87,13 @@ class EditPurchaseDialog extends StatelessWidget {
                           title: 'Excluir compra?',
                           message: 'Isso vai remover "${purchase.name}" permanentemente.',
                         );
-                        if (confirmed && context.mounted) {
+                        if (!confirmed || !context.mounted) return;
+                        try {
                           await context.read<AppState>().deletePurchase(purchase.id);
                           if (context.mounted) Navigator.of(context).pop();
+                          AppToast.success('Compra excluída.');
+                        } catch (_) {
+                          AppToast.error('Não foi possível excluir a compra.');
                         }
                       },
                       style: OutlinedButton.styleFrom(foregroundColor: scheme.error),

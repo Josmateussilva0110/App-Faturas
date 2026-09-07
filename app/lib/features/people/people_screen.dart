@@ -1,30 +1,106 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_spacing.dart';
 import '../../core/utils/formatters.dart';
 import '../../state/app_state.dart';
 import '../../widgets/empty_state.dart';
+import '../../widgets/section_label.dart';
 import '../share/share_bill_dialog.dart';
 import 'widgets/person_row.dart';
 
-/// The "Pessoas" tab: this month's total broken down by who it belongs to,
-/// each shareable as a formatted bill via [showShareBillDialog].
-class PeopleScreen extends StatelessWidget {
+/// The "Pessoas" tab: a given month's total broken down by who it belongs
+/// to, each shareable as a formatted bill via [showShareBillDialog]. Month
+/// browsing here is local to this screen, same as the Deposit screen —
+/// independent of the "Meses" tab's own offset.
+class PeopleScreen extends StatefulWidget {
   const PeopleScreen({super.key});
+
+  @override
+  State<PeopleScreen> createState() => _PeopleScreenState();
+}
+
+class _PeopleScreenState extends State<PeopleScreen> {
+  int _monthOffset = 0;
 
   @override
   Widget build(BuildContext context) {
     final appState = context.watch<AppState>();
-    final people = appState.personSummaries;
+    final people = appState.personSummariesFor(_monthOffset);
+    final scheme = Theme.of(context).colorScheme;
+    final dark = Theme.of(context).brightness == Brightness.dark;
+    final pillFill = dark ? scheme.surfaceContainerHigh : Colors.white;
+    final pillBorder = dark ? scheme.outlineVariant : const Color(0xFFE2E8F0);
+    final monthLabel = formatMonthLabel(appState.currentAbs + _monthOffset);
 
     return Scaffold(
       appBar: AppBar(title: const Text('Por pessoa')),
       body: ListView(
         padding: const EdgeInsets.all(AppSpacing.lg),
         children: [
+          Container(
+            height: 48,
+            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
+            decoration: BoxDecoration(
+              color: pillFill,
+              borderRadius: BorderRadius.circular(AppRadius.md),
+              border: Border.all(color: pillBorder),
+            ),
+            child: Row(
+              children: [
+                IconButton(
+                  onPressed: () => setState(() => _monthOffset -= 1),
+                  icon: const Icon(Icons.chevron_left),
+                  visualDensity: VisualDensity.compact,
+                  constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                  padding: EdgeInsets.zero,
+                ),
+                Expanded(
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.calendar_today_outlined, size: 16, color: scheme.onSurfaceVariant),
+                      const SizedBox(width: 8),
+                      Flexible(
+                        child: Text(
+                          monthLabel,
+                          overflow: TextOverflow.ellipsis,
+                          maxLines: 1,
+                          style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                IconButton(
+                  onPressed: () => setState(() => _monthOffset += 1),
+                  icon: const Icon(Icons.chevron_right),
+                  visualDensity: VisualDensity.compact,
+                  constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                  padding: EdgeInsets.zero,
+                ),
+                if (_monthOffset != 0)
+                  TextButton(
+                    onPressed: () => setState(() => _monthOffset = 0),
+                    style: TextButton.styleFrom(
+                      visualDensity: VisualDensity.compact,
+                      padding: const EdgeInsets.symmetric(horizontal: 8),
+                    ),
+                    child: const Text('Hoje', style: TextStyle(fontSize: 12)),
+                  ),
+              ],
+            ),
+          ),
+          const SizedBox(height: AppSpacing.lg),
+          SectionLabel(
+            'Gastos por pessoa',
+            icon: Icons.people_outline,
+            iconColor: AppColors.iconTint(AppColors.huePeople, dark: dark),
+          ),
+          const SizedBox(height: AppSpacing.sm),
           if (people.isEmpty)
-            const EmptyState(message: 'Nenhuma compra ativa este mês.')
+            const EmptyState(message: 'Nenhuma compra ativa neste mês.')
           else
             for (final person in people) ...[
               PersonRow(
@@ -33,7 +109,7 @@ class PeopleScreen extends StatelessWidget {
                 onShare: () => showShareBillDialog(
                   context,
                   label: person.label,
-                  rows: appState.transactionsForPerson(person.label),
+                  rows: appState.transactionsForPersonFor(_monthOffset, person.label),
                   subtotal: person.total,
                 ),
               ),
@@ -48,18 +124,14 @@ class PeopleScreen extends StatelessWidget {
                 Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(Icons.swap_vert, size: 16, color: Theme.of(context).colorScheme.primary),
+                    Icon(Icons.swap_vert, size: 16, color: scheme.primary),
                     const SizedBox(width: 6),
                     const Text('Total geral', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15)),
                   ],
                 ),
                 Text(
-                  formatMoney(appState.grandTotal),
-                  style: TextStyle(
-                    fontWeight: FontWeight.w800,
-                    fontSize: 19,
-                    color: Theme.of(context).colorScheme.primary,
-                  ),
+                  formatMoney(appState.totalFor(_monthOffset)),
+                  style: TextStyle(fontWeight: FontWeight.w800, fontSize: 19, color: scheme.primary),
                 ),
               ],
             ),
