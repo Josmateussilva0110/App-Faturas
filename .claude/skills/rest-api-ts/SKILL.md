@@ -1,6 +1,6 @@
 ---
 name: rest-api-ts
-description: Padrões de API REST em TypeScript com camadas route/controller/service, envelope de resposta único, ServiceResult em vez de exceções, validação por schema no middleware e mapa de código de erro para status HTTP. Use sempre que a tarefa envolver criar ou alterar endpoint, rota, controller, service, schema de validação, middleware, código de erro ou tratamento de erro numa API TypeScript/Express, mesmo que o pedido não use essas palavras — inclui frases como "cria um endpoint de X", "adiciona validação em Y", "esse endpoint está retornando erro", "preciso salvar isso no servidor", ou pedidos que chegam pelo lado do cliente e exigem mudança na API.
+description: Padrões de API REST em TypeScript com camadas route/controller/service/model, envelope de resposta único, ServiceResult em vez de exceções, validação com zod no middleware e mapa de código de erro para status HTTP. Use sempre que a tarefa envolver criar ou alterar endpoint, rota, controller, service, schema de validação, middleware, código de erro ou tratamento de erro numa API TypeScript/Express, mesmo que o pedido não use essas palavras — inclui frases como "cria um endpoint de X", "adiciona validação em Y", "esse endpoint está retornando erro", "preciso salvar isso no servidor", ou pedidos que chegam pelo lado do cliente e exigem mudança na API.
 ---
 
 # API REST em TypeScript — padrões de camadas e contrato
@@ -17,12 +17,20 @@ autenticação, caminhos, armadilhas já vividas).
 
 ## Camadas
 
+O fluxo é sempre o mesmo:
+
+```
+routes -> controller -> service
+routes -> controller -> service -> model   (quando o acesso a dados cresce)
+```
+
 ```
 src/
 ├── routes/        # caminho + middlewares. Zero lógica.
 ├── controllers/   # resultado do service -> HTTP. Zero regra de negócio.
-├── services/      # regra de negócio, fala com o banco. Nunca lança.
-├── schemas/       # validação de entrada, um arquivo por payload
+├── services/      # regra de negócio. Nunca lança.
+├── models/        # acesso a dados e mapeamento de linha -> tipo (opcional)
+├── schemas/       # zod, um arquivo por payload
 ├── middleware/    # auth, validate, rate limit, errorHandler, notFound
 ├── types/         # ServiceResult, envelope de resposta, códigos de erro
 ├── errors/        # mapa código -> status HTTP
@@ -33,6 +41,46 @@ src/
 O teste que mantém as camadas honestas: **se você precisa do objeto
 `response` dentro de um service, ou do cliente de banco dentro de um
 controller, a lógica está na camada errada.**
+
+### Quando criar a camada de model
+
+O model não é obrigatório. Para um CRUD simples, o service falar direto com o
+banco é mais claro do que atravessar uma camada que só repassa a chamada.
+
+Crie o model quando aparecer um destes sinais:
+
+- a mesma consulta é usada por mais de um service;
+- o service começa a ter mais linhas de montagem de query do que de regra de
+  negócio;
+- o mapeamento de linha para tipo ficou complexo o bastante para ter casos.
+
+Nesse ponto a camada passa a pagar o próprio custo: a regra de negócio volta a
+caber na cabeça, e trocar o banco vira mudança local.
+
+## Nomenclatura e comentários
+
+**Identificadores em inglês** — funções, variáveis, tipos, arquivos.
+**Comentários em português**, curtos e só quando fazem falta.
+
+A divisão tem motivo: o vocabulário em volta já é inglês (`request`,
+`response`, `next`, `data`, `error`), e misturar idiomas produz coisas como
+`buscarUserById`. Comentário é outra coisa — é conversa entre pessoas do
+time, e ali o português comunica melhor e mais rápido.
+
+Comentário bom explica **por quê**, não **o quê**. O código já diz o quê:
+
+```ts
+// Ruim: repete o que a linha abaixo já mostra
+// Incrementa o contador
+attempts += 1
+
+// Bom: explica a decisão, que o código não consegue mostrar
+// Só tentativas que falharam contam, para não punir quem acerta a senha
+attempts += 1
+```
+
+Quando o código precisa de um comentário para ser entendido, considere antes
+renomear ou extrair — costuma resolver melhor que a explicação.
 
 ## Envelope de resposta
 
@@ -131,6 +179,31 @@ Dois pontos que importam:
   Retornar a linha crua vaza colunas internas para o cliente na primeira vez
   que alguém adicionar um campo na tabela.
 
+## Funções pequenas e sem repetição
+
+Quando um método faz mais de uma coisa — valida, transforma, consulta e
+formata — extraia as partes. O sinal prático: **se você precisou de um
+comentário para separar "seções" dentro da função, cada seção provavelmente é
+uma função.** Nomeie a extração pelo que ela decide, não pelo passo do
+processo (`mapPasswordUpdateError` diz mais que `step2`).
+
+Isso não é estética. Função que faz uma coisa só é a que dá para testar
+isoladamente, reaproveitar e ler sem rolar a tela.
+
+Nesta arquitetura a duplicação aparece quase sempre nos mesmos três lugares —
+vale extrair já na segunda ocorrência:
+
+- **o bloco de erro do controller** (traduzir código para status e montar o
+  corpo) — é o que `getHttpStatusFromError` resolve;
+- **o mapeamento de linha do banco para tipo**, repetido entre `get` e
+  `update` do mesmo recurso;
+- **listas de colunas de `SELECT`**, que devem morar em `constants/`, senão
+  divergem entre as consultas do mesmo recurso.
+
+Duplicação que ainda não se repetiu não é duplicação: duas coisas parecidas
+que mudam por razões diferentes devem continuar separadas. Abstrair cedo
+demais custa mais caro que copiar uma vez.
+
 ## Rota
 
 ```ts
@@ -146,14 +219,38 @@ Rotas de autenticação precisam de rate limiter. Prefira contar apenas as
 tentativas que falham (no `express-rate-limit`,
 `skipSuccessfulRequests: true`), para não punir quem acerta a senha.
 
-## Validação
+## Validação com zod
+
+**Todo dado vindo do cliente passa por um schema zod** — corpo, query e
+params — antes de chegar ao controller. Sem exceção. Endpoint que confia no
+formato enviado pelo cliente é por onde entra dado malformado, e depois
+payload construído de propósito.
 
 A validação mora num middleware `validate(Schema)`, nunca dentro do
 controller. Ele responde **422** com a lista de `errors` no formato do
 envelope e só chama `next()` com os dados já convertidos.
 
+```ts
+// schemas/createCardSchema.ts
+export const CreateCardSchema = z.object({
+  name: z.string().trim().min(1, "Informe o nome do cartão.").max(60, "Nome muito longo."),
+})
+
+export type CreateCardDTO = z.infer<typeof CreateCardSchema>
+```
+
+Três detalhes que fazem diferença:
+
+- **Mensagens em português**, porque elas chegam ao usuário final pelo campo
+  `errors[].message`.
+- **O tipo sai do schema com `z.infer`**, nunca declarado à mão em paralelo.
+  Assim o schema é a única fonte da verdade e não existe o caso de o tipo
+  dizer uma coisa e a validação aceitar outra.
+- **Normalize na validação** (`trim`, `toLowerCase`), não no controller — o
+  resto do código recebe o dado já limpo.
+
 Manter isso fora do controller é o que garante que toda rota falhe da mesma
-maneira — e o cliente só precisa entender um formato de erro de validação.
+maneira, e o cliente só precisa entender um formato de erro de validação.
 
 ## Códigos de erro
 
@@ -186,16 +283,39 @@ Ao mexer numa lista de colunas de `SELECT`, confira contra as migrations. A
 maioria dos bancos rejeita a **query inteira** quando uma coluna não existe,
 então um campo errado não derruba um campo: derruba o endpoint.
 
+**Nunca decida de quem é o dado por um id vindo do cliente.** O dono sai do
+token autenticado; o id do corpo ou da URL serve no máximo para dizer *qual*
+registro, e ainda assim filtrado pelo dono. É a diferença entre um endpoint
+correto e um que entrega a conta de outra pessoa para quem trocar um número
+na requisição.
+
+## Desempenho
+
+Antes de otimizar, meça — mas estes quatro erros são caros e fáceis de evitar
+desde o início:
+
+- **Chamadas independentes vão em paralelo** (`Promise.all`). `await`
+  encadeado soma latências que poderiam correr juntas; num endpoint que faz
+  três consultas, isso é a diferença entre 90ms e 270ms.
+- **Filtre, ordene e pagine no banco**, não em JavaScript. Trazer mil linhas
+  para descartar novecentas gasta rede, memória e tempo de serialização.
+- **Selecione só as colunas que usa.** Além de mais leve, evita vazar coluna
+  nova sem querer.
+- **Cuidado com N+1**: consulta dentro de laço vira N consultas. Busque em
+  lote e junte na memória.
+
 ## Passo a passo para um endpoint novo
 
 1. Migration, se envolver coluna ou tabela nova
-2. Schema de validação, se houver corpo ou query
-3. Método no service, devolvendo `ServiceResult`
-4. Código novo no enum + no mapa de status, se houver erro novo
-5. Método no controller, na forma acima
-6. Rota, com os middlewares na ordem certa
-7. Checagem de tipos antes de encerrar
-8. Do lado do cliente: a função correspondente e a constante da rota
+2. Schema zod em `schemas/`, com o DTO saindo de `z.infer`
+3. Acesso a dados: no service mesmo, ou no model se algum dos sinais acima
+   aparecer
+4. Método no service, devolvendo `ServiceResult`
+5. Código novo no enum + no mapa de status, se houver erro novo
+6. Método no controller, na forma acima
+7. Rota, com os middlewares na ordem certa
+8. Checagem de tipos antes de encerrar
+9. Do lado do cliente: a função correspondente e a constante da rota
 
 ## Higiene de configuração
 
