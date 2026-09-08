@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 
 import '../core/utils/formatters.dart';
+import '../data/api/auth_storage.dart';
 import '../data/fatura_repository.dart';
+import '../data/services/profile_service.dart';
 import '../models/app_user.dart';
 import '../models/card_model.dart';
 import '../models/expense.dart';
@@ -46,10 +48,17 @@ class AppState extends ChangeNotifier {
   /// The user's monthly spending goal, or `null` when none is set.
   double? spendingLimit;
 
-  /// The logged-in user. Populated by [load]; only read once [isLoading] is
-  /// false, since every screen that shows it sits behind that gate.
+  /// The signed-in account, from the backend. Populated by [load]; only read
+  /// once [isLoading] is false, since every screen that shows it sits behind
+  /// that gate.
   late AppUser currentUser;
 
+  /// Loads everything the screens need. Call it once a session is active —
+  /// [currentUser] comes from an authenticated endpoint.
+  ///
+  /// The profile request goes in the same batch as the repository reads:
+  /// it's the only one that touches the network, so waiting for it *after*
+  /// the others would add its full round trip to every app launch.
   Future<void> load() async {
     final results = await Future.wait([
       _repository.fetchCards(),
@@ -57,7 +66,7 @@ class AppState extends ChangeNotifier {
       _repository.fetchSalaries(),
       _repository.fetchExpenses(),
       _repository.fetchSpendingLimit(),
-      _repository.fetchCurrentUser(),
+      _fetchCurrentUser(),
     ]);
     cards = results[0] as List<CardModel>;
     purchases = results[1] as List<Purchase>;
@@ -66,6 +75,41 @@ class AppState extends ChangeNotifier {
     spendingLimit = results[4] as double?;
     currentUser = results[5] as AppUser;
     isLoading = false;
+    notifyListeners();
+  }
+
+  /// The account behind `GET /profile`. When that call fails (offline, server
+  /// down) we fall back to what the stored session already knows, so the app
+  /// still opens instead of dying on an unset `late` field.
+  Future<AppUser> _fetchCurrentUser() async {
+    final response = await getProfile();
+    final profile = response.data;
+
+    if (response.success && profile != null) {
+      return AppUser(
+        id: profile.id,
+        // The backend allows a blank username; fall back to the email so the
+        // profile never shows an empty name.
+        name: profile.username.isNotEmpty ? profile.username : profile.email,
+        email: profile.email,
+      );
+    }
+
+    final stored = await authStorage.read();
+    final email = stored?.user.email ?? '';
+    return AppUser(id: stored?.user.id ?? '', name: email, email: email);
+  }
+
+  /// Drops everything tied to the account that just signed out, so the next
+  /// login doesn't briefly show the previous user's data.
+  void reset() {
+    isLoading = true;
+    cards = [];
+    purchases = [];
+    salaries = [];
+    expenses = [];
+    spendingLimit = null;
+    monthOffset = 0;
     notifyListeners();
   }
 

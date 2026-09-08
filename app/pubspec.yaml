@@ -50,6 +50,9 @@ dependencies:
   # HTTP client for the backend API (interceptors for auth + token refresh)
   dio: ^5.7.0
 
+  # Keeps the session (refresh token) on the device between launches
+  flutter_secure_storage: ^9.2.2
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

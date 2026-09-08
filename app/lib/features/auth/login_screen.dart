@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 import '../../core/theme/app_spacing.dart';
 import '../../core/toast/app_toast.dart';
 import '../../data/api/api_response.dart';
 import '../../data/services/auth_service.dart';
+import '../../state/app_state.dart';
 import '../../widgets/app_illustration.dart';
 import '../../widgets/app_text_field.dart';
 import '../../widgets/form_section_card.dart';
@@ -13,8 +15,9 @@ import '../shell/app_entry.dart';
 ///
 /// A successful login starts the session (`startSession`), so every later
 /// call made through `requestData` carries the token — and gets refreshed
-/// automatically when it expires. The app's *data* still comes from
-/// `MockFaturaRepository`; only auth is wired to the API.
+/// automatically when it expires. The session is then stored, so the user
+/// stays signed in across restarts until they sign out. The app's *data*
+/// still comes from `MockFaturaRepository`; auth and the profile are real.
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
 
@@ -82,6 +85,11 @@ class _LoginScreenState extends State<LoginScreen> {
     }
 
     await startSession(session);
+    if (!mounted) return;
+
+    // Load with the token already active, so the app doesn't open on a
+    // spinner.
+    await context.read<AppState>().load();
     if (!mounted) return;
 
     AppToast.success('Bem-vindo de volta!');

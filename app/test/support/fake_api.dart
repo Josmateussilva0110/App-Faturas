@@ -35,6 +35,23 @@ ResponseBody jsonBody(Map<String, dynamic> body, int status) {
   );
 }
 
+/// An account payload shaped like the backend's `UserProfile`.
+Map<String, dynamic> fakeProfile({
+  String username = 'Mateus',
+  String email = 'mateus@email.com',
+}) {
+  return {'id': 'u1', 'username': username, 'email': email};
+}
+
+/// Answers the endpoints the app hits at boot and after login: the profile
+/// for `/profile`, a session for everything else.
+ResponseBody defaultHandler(RequestOptions options) {
+  if (options.path.contains('/profile')) {
+    return jsonBody({'success': true, 'data': fakeProfile()}, 200);
+  }
+  return jsonBody({'success': true, 'message': 'ok', 'data': fakeSession()}, 200);
+}
+
 /// A session payload shaped like the backend's `AuthTokens`, expiring far
 /// enough in the future that nothing tries to refresh it mid-test.
 Map<String, dynamic> fakeSession({

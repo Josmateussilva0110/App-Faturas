@@ -3,11 +3,17 @@ import 'package:provider/provider.dart';
 
 import 'core/theme/app_theme.dart';
 import 'core/toast/app_toast.dart';
+import 'data/api/auth_storage.dart';
+import 'data/api/secure_auth_storage.dart';
 import 'data/mock_fatura_repository.dart';
-import 'features/onboarding/welcome_screen.dart';
+import 'features/shell/session_gate.dart';
 import 'state/app_state.dart';
 
 void main() {
+  WidgetsFlutterBinding.ensureInitialized();
+  // From here on the session survives restarts; tests swap this for an
+  // in-memory implementation.
+  authStorage = SecureAuthStorage();
   runApp(const FaturaApp());
 }
 
@@ -17,7 +23,8 @@ class FaturaApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
-      create: (_) => AppState(MockFaturaRepository())..load(),
+      // `load` runs only once a session exists — see SessionGate.
+      create: (_) => AppState(MockFaturaRepository()),
       child: Consumer<AppState>(
         builder: (context, appState, _) {
           return MaterialApp(
@@ -27,10 +34,7 @@ class FaturaApp extends StatelessWidget {
             theme: AppTheme.light(),
             darkTheme: AppTheme.dark(),
             themeMode: appState.themeMode,
-            // The welcome screen doesn't need the loaded data, so it shows
-            // right away while `AppState.load` runs in the background;
-            // `AppEntry` (pushed after login) is what waits for it.
-            home: const WelcomeScreen(),
+            home: const SessionGate(),
           );
         },
       ),

@@ -5,6 +5,7 @@ import 'package:fatura/data/api/api_client.dart';
 import 'package:fatura/data/api/auth_storage.dart';
 import 'package:fatura/data/api/token_manager.dart';
 import 'package:fatura/main.dart';
+import 'package:fatura/models/auth_data.dart';
 
 import 'support/fake_api.dart';
 
@@ -21,10 +22,9 @@ void main() {
   setUp(() {
     tokenManager.clearTokens();
     authStorage = InMemoryAuthStorage();
-    // Default: the backend accepts the login. Individual tests override it.
-    api.httpClientAdapter = FakeAdapter(
-      (_) => jsonBody({'success': true, 'message': 'ok', 'data': fakeSession()}, 200),
-    );
+    // Default: the backend accepts the login and serves the profile.
+    // Individual tests override it.
+    api.httpClientAdapter = FakeAdapter(defaultHandler);
   });
 
   tearDown(tokenManager.clearTokens);
@@ -124,5 +124,65 @@ void main() {
 
     await tester.pump(const Duration(seconds: 3));
     await tester.pumpAndSettle();
+  });
+
+  testWidgets('A stored session opens straight into the app', (tester) async {
+    await authStorage.save(AuthData.fromJson(fakeSession()));
+
+    await _pumpApp(tester);
+
+    // No welcome screen, no login: the session was restored at boot.
+    expect(find.widgetWithText(FilledButton, 'Entrar'), findsNothing);
+    expect(find.text('Início'), findsOneWidget);
+    expect(tokenManager.accessToken, 'access-1');
+  });
+
+  testWidgets('The profile shows the account from the backend', (tester) async {
+    await authStorage.save(AuthData.fromJson(fakeSession()));
+    await _pumpApp(tester);
+
+    await tester.tap(find.byIcon(Icons.person_outline));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Mateus'), findsOneWidget);
+    expect(find.text('mateus@email.com'), findsOneWidget);
+  });
+
+  testWidgets('Signing out clears the session and returns to the welcome screen',
+      (tester) async {
+    await authStorage.save(AuthData.fromJson(fakeSession()));
+    await _pumpApp(tester);
+
+    await tester.tap(find.byIcon(Icons.person_outline));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Sair da conta'));
+    await tester.pumpAndSettle();
+
+    expect(find.widgetWithText(FilledButton, 'Entrar'), findsOneWidget);
+    expect(tokenManager.accessToken, isNull);
+    expect(tokenManager.refreshToken, isNull);
+    // Nothing left on disk — the next launch lands on the welcome screen.
+    expect(await authStorage.read(), isNull);
+  });
+
+  testWidgets('An account without a username falls back to the email', (tester) async {
+    api.httpClientAdapter = FakeAdapter((options) {
+      if (options.path.contains('/profile')) {
+        return jsonBody({
+          'success': true,
+          'data': fakeProfile(username: '', email: 'semnome@email.com'),
+        }, 200);
+      }
+      return jsonBody({'success': true, 'data': fakeSession()}, 200);
+    });
+    await authStorage.save(AuthData.fromJson(fakeSession()));
+    await _pumpApp(tester);
+
+    await tester.tap(find.byIcon(Icons.person_outline));
+    await tester.pumpAndSettle();
+
+    // Shown once as the name, not duplicated on the line below it.
+    expect(find.text('semnome@email.com'), findsOneWidget);
   });
 }

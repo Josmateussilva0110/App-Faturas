@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Android 12+ separa backup na nuvem de transferência entre aparelhos, e a
+  segunda ignora android:allowBackup. Aqui as duas ficam proibidas de copiar
+  o arquivo onde o flutter_secure_storage guarda a sessão.
+
+  A chave de descriptografia vive no keystore e nunca sai do aparelho, então
+  uma cópia restaurada seria inútil de qualquer forma — mas o certo é não
+  deixá-la sair.
+-->
+<data-extraction-rules>
+    <cloud-backup>
+        <exclude domain="sharedpref" path="FlutterSecureStorage.xml"/>
+    </cloud-backup>
+    <device-transfer>
+        <exclude domain="sharedpref" path="FlutterSecureStorage.xml"/>
+    </device-transfer>
+</data-extraction-rules>
