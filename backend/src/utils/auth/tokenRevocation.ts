@@ -1,6 +1,6 @@
 import crypto from "crypto"
 import jwt from "jsonwebtoken"
-import { getRedisClient } from "../database/redis/redis"
+import { getRedisClient } from "../../database/redis/redis"
 
 const revokedTokenHashes = new Map<string, number>()
 const revokedUsers = new Map<string, number>()

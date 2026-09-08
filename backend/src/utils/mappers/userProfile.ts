@@ -1,4 +1,4 @@
-import { UserProfile } from "../types/users/profile"
+import { UserProfile } from "../../types/users/profile"
 
 type UserProfileRow = {
   id: string

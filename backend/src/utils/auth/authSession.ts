@@ -1,4 +1,4 @@
-import { AuthTokens } from "../types/auth/auth.types"
+import { AuthTokens } from "../../types/auth/auth.types"
 
 type AuthSession = {
   access_token: string

@@ -140,13 +140,31 @@ async metodo(request: Request, response: Response): Promise<Response> {
 }
 ```
 
+**`create` e `update` respondem só com o `id`**, não com o recurso inteiro. O
+cliente acabou de enviar os demais campos, então devolvê-los é tráfego sem
+uso — e no banco significa um `SELECT` de todas as colunas em vez de uma. As
+leituras (`GET`) é que trazem o recurso completo.
+
 Quando o cliente precisar reagir a um erro específico — por exemplo, apagar a
 sessão local só quando a sessão foi revogada, e não quando a rede falhou —
 inclua também o `code` no corpo do erro. Trate isso como contrato: mudar
 aquele código muda o comportamento do cliente.
 
-Métodos que usam `this` precisam de `.bind(Controller)` ao serem passados
-para a rota.
+### Onde colocam-se os helpers de cada camada
+
+Métodos de controller são passados soltos para o roteador
+(`router.get(..., Controller.list)`), então **`this` é `undefined` dentro
+deles**. A consequência prática importa: helper de controller vai para
+`utils/`, nunca para método privado — o método privado compila normalmente e
+quebra só em runtime, no primeiro request. Se precisar mesmo de `this`, a
+rota tem que passar `Controller.metodo.bind(Controller)`.
+
+Em service é o contrário: eles são sempre chamados como `Service.metodo()`,
+então `this` funciona. Lógica que só aquele service usa pertence a um método
+privado dele; o que serve a vários vira helper em `utils/`.
+
+O objetivo dos dois lados é o mesmo: arquivos de controller e service com
+imports e a classe, sem funções soltas no topo.
 
 ## Service — sempre esta forma
 
@@ -194,7 +212,10 @@ Nesta arquitetura a duplicação aparece quase sempre nos mesmos três lugares �
 vale extrair já na segunda ocorrência:
 
 - **o bloco de erro do controller** (traduzir código para status e montar o
-  corpo) — é o que `getHttpStatusFromError` resolve;
+  corpo). Extraia um `sendFailure(response, error, statusMap)` genérico no
+  código de erro, recebendo o mapa por parâmetro — assim ele serve a todos os
+  recursos, e o genérico amarra enum e mapa: passar o mapa de outro domínio
+  não compila;
 - **o mapeamento de linha do banco para tipo**, repetido entre `get` e
   `update` do mesmo recurso;
 - **listas de colunas de `SELECT`**, que devem morar em `constants/`, senão

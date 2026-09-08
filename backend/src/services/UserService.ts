@@ -3,30 +3,34 @@ import { USER_PROFILE_SELECT } from "../constants/user.constants"
 import { ServiceResult } from "../types/serviceResults/ServiceResult"
 import { UserErrorCode } from "../types/code/userCode"
 import { AuthTokens } from "../types/auth/auth.types"
-import { UserProfile } from "../types/users/profile"
+import { UpdatedUser, UserProfile } from "../types/users/profile"
 import { ChangePasswordDTO } from "../schemas/changePasswordSchema"
 import { PasswordResetRequestDTO } from "../schemas/passwordResetRequestSchema"
-import { getUserIdFromAccessToken } from "../utils/accessToken"
-import { isRefreshTokenReuseOrRevoked } from "../utils/authErrors"
-import { buildAuthTokens } from "../utils/authSession"
-import { mapUserProfileRow } from "../utils/userProfile"
-import { revokeAccessToken, revokeUserSessions } from "../utils/tokenRevocation"
-
-function mapPasswordUpdateError(message: string | undefined): string {
-    const normalized = (message ?? "").toLowerCase()
-
-    if (normalized.includes("different from the old password")) {
-        return "A nova senha deve ser diferente da senha atual."
-    }
-
-    if (normalized.includes("should be at least") || normalized.includes("weak")) {
-        return "A nova senha não atende aos requisitos de segurança."
-    }
-
-    return "Não foi possível atualizar a senha."
-}
+import { getUserIdFromAccessToken } from "../utils/auth/accessToken"
+import { isRefreshTokenReuseOrRevoked } from "../utils/auth/authErrors"
+import { buildAuthTokens } from "../utils/auth/authSession"
+import { mapUserProfileRow } from "../utils/mappers/userProfile"
+import { revokeAccessToken, revokeUserSessions } from "../utils/auth/tokenRevocation"
 
 class UserService {
+
+    /**
+     * Traduz o erro cru do Supabase para uma mensagem que faz sentido ao
+     * usuário. Privado porque só o fluxo de troca de senha precisa dele.
+     */
+    private mapPasswordUpdateError(message: string | undefined): string {
+        const normalized = (message ?? "").toLowerCase()
+
+        if (normalized.includes("different from the old password")) {
+            return "A nova senha deve ser diferente da senha atual."
+        }
+
+        if (normalized.includes("should be at least") || normalized.includes("weak")) {
+            return "A nova senha não atende aos requisitos de segurança."
+        }
+
+        return "Não foi possível atualizar a senha."
+    }
 
     async login(email: string, password: string): Promise<ServiceResult<AuthTokens, UserErrorCode>> {
         try {
@@ -183,7 +187,7 @@ class UserService {
     async updateProfile(
         accessToken: string,
         updates: { username: string }
-    ): Promise<ServiceResult<UserProfile, UserErrorCode>> {
+    ): Promise<ServiceResult<UpdatedUser, UserErrorCode>> {
         try {
             const userId = getUserIdFromAccessToken(accessToken)
 
@@ -199,11 +203,12 @@ class UserService {
 
             const supabase = createSupabaseClientForUser(accessToken)
 
+            // Só o id volta: o cliente já tem o username que enviou.
             const { data, error } = await supabase
                 .from("users")
                 .update({ username: updates.username })
                 .eq("id", userId)
-                .select(USER_PROFILE_SELECT)
+                .select("id")
                 .single()
 
             if (error || !data) {
@@ -219,7 +224,7 @@ class UserService {
 
             return {
                 status: true,
-                data: mapUserProfileRow(data),
+                data: { id: data.id },
             }
         } catch (error) {
             console.error("[UserService.updateProfile] error:", error)
@@ -238,7 +243,7 @@ class UserService {
     async changePassword(
         accessToken: string,
         payload: ChangePasswordDTO
-    ): Promise<ServiceResult<UserProfile, UserErrorCode>> {
+    ): Promise<ServiceResult<UpdatedUser, UserErrorCode>> {
         try {
             const userId = getUserIdFromAccessToken(accessToken)
 
@@ -312,7 +317,7 @@ class UserService {
                         status: false,
                         error: {
                             code: UserErrorCode.USER_UPDATE_FAILED,
-                            message: mapPasswordUpdateError(updateError.message),
+                            message: this.mapPasswordUpdateError(updateError.message),
                         },
                     }
                 }
@@ -328,7 +333,7 @@ class UserService {
                         status: false,
                         error: {
                             code: UserErrorCode.USER_UPDATE_FAILED,
-                            message: mapPasswordUpdateError(updateError.message),
+                            message: this.mapPasswordUpdateError(updateError.message),
                         },
                     }
                 }
@@ -345,7 +350,13 @@ class UserService {
                 }
             }
 
-            return this.getProfile(accessToken)
+            // Antes isto era `return this.getProfile(accessToken)`, uma
+            // consulta a mais só para montar a resposta. Com o retorno
+            // enxuto ela deixa de existir.
+            return {
+                status: true,
+                data: { id: userId },
+            }
         } catch (error) {
             console.error("[UserService.changePassword] error:", error)
             return {

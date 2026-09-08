@@ -1,4 +1,4 @@
-import { createRateLimiter } from "../utils/createRateLimiter"
+import { createRateLimiter } from "../utils/rateLimit/createRateLimiter"
 
 /** Protege health checks contra abuso; limite generoso para probes de cloud (Render, etc.). */
 export const healthRateLimiter = createRateLimiter({

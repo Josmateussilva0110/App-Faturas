@@ -20,12 +20,15 @@ Future<ApiResponse<UserProfile>> getProfile() {
 }
 
 /// `PUT /profile`
-Future<ApiResponse<UserProfile>> updateProfile({required String username}) {
-  return requestData<UserProfile>(
+///
+/// Responde apenas com o id: o cliente já tem o `username` que enviou, então
+/// devolver o perfil inteiro seria tráfego sem uso.
+Future<ApiResponse<String>> updateProfile({required String username}) {
+  return requestData<String>(
     endpoint: ProfileRoutes.profile,
     method: 'PUT',
     data: {'username': username},
-    parse: _parseProfile,
+    parse: (json) => (json! as Map)['id'] as String,
   );
 }
 

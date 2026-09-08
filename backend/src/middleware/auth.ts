@@ -3,7 +3,7 @@ import jwt from "jsonwebtoken"
 import type { User } from "@supabase/supabase-js"
 import { env } from "../config/env"
 import { supabaseAdmin } from "../database/supabase/supabase"
-import { isAccessTokenRevoked, isUserSessionRevoked } from "../utils/tokenRevocation"
+import { isAccessTokenRevoked, isUserSessionRevoked } from "../utils/auth/tokenRevocation"
 
 type SupabaseJwtPayload = jwt.JwtPayload & {
   sub: string

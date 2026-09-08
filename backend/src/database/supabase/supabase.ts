@@ -3,7 +3,7 @@ import { env } from "../../config/env"
 import {
   getUserIdFromAccessToken,
   mintSupabaseAccessToken,
-} from "../../utils/accessToken"
+} from "../../utils/auth/accessToken"
 
 const clientOptions = {
     auth: {

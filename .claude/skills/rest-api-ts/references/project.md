@@ -42,6 +42,32 @@ acoplamentos que não são óbvios lendo só o backend:
   `SESSION_REVOKED` e `INVALID_CREDENTIALS` derrubam a sessão; qualquer outra
   falha a preserva. Ver `refresh_service.dart`.
 
+## Helpers compartilhados
+
+`utils/` é dividido por finalidade — ao criar um helper, encaixe no grupo
+existente em vez de deixar na raiz:
+
+```
+utils/
+├── auth/       accessToken, authErrors, authSession, getAccessToken, tokenRevocation
+├── http/       getHttpStatusFromError, getValidatedParams, sendFailure
+├── service/    serviceResult, supabaseErrors
+├── mappers/    purchase, userProfile
+├── rateLimit/  createRateLimiter, rateLimitStore
+└── cache/      shortCache  (sem uso hoje)
+```
+
+Os mais usados no dia a dia:
+
+- `http/sendFailure` — traduz `result.error` em resposta HTTP. Recebe o mapa
+  de status por parâmetro, então vale para qualquer recurso:
+  `sendFailure(response, result.error, purchaseErrorHttpStatusMap)`. Passe
+  `{ exposeCode: true }` só quando o cliente precisar distinguir o motivo.
+- `service/serviceResult` — `failure(code, message)` monta o ramo de erro do
+  `ServiceResult`, evitando repetir o literal em cada saída do service.
+- `http/getValidatedParams` — lê `request.validatedParams` já tipado.
+- `auth/getAccessToken` — token da requisição já autenticada.
+
 ## Armadilhas já vividas
 
 - **`USER_PROFILE_SELECT` pedia `earnings_percent`, coluna inexistente em

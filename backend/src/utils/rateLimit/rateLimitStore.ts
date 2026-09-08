@@ -1,6 +1,6 @@
 import type { Store } from "express-rate-limit"
 import { RedisStore } from "rate-limit-redis"
-import { getRedisClient } from "../database/redis/redis"
+import { getRedisClient } from "../../database/redis/redis"
 
 let sharedStore: Store | undefined
 

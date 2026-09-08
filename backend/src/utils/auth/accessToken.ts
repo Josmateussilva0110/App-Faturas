@@ -1,6 +1,6 @@
 import jwt from "jsonwebtoken"
 
-import { env } from "../config/env"
+import { env } from "../../config/env"
 
 /** Tempo de vida do JWT emitido pelo backend para queries PostgREST (RLS). */
 const SUPABASE_DB_JWT_TTL_SECONDS = 300

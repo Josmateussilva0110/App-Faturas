@@ -1,4 +1,4 @@
-import { createRateLimiter } from "../utils/createRateLimiter"
+import { createRateLimiter } from "../utils/rateLimit/createRateLimiter"
 
 /**
  * Com REDIS_URL: contadores compartilhados entre instâncias.

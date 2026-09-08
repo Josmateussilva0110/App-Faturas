@@ -1,24 +1,15 @@
 import { Request, Response } from "express"
 import UserService from "../services/UserService"
 import { userErrorHttpStatusMap } from "../errors/userErrorHttpMapper"
-import { getAccessToken } from "../utils/getAccessToken"
-import { getHttpStatusFromError } from "../utils/getHttpStatusFromError"
+import { getAccessToken } from "../utils/auth/getAccessToken"
+import { sendFailure } from "../utils/http/sendFailure"
 
 class UserController {
 
   async login(request: Request, response: Response): Promise<Response> {
     const { email, password } = request.body
     const result = await UserService.login(email, password)
-    if (!result.status) {
-      const httpStatus = getHttpStatusFromError(
-        result.error.code,
-        userErrorHttpStatusMap
-      )
-      return response.status(httpStatus).json({
-        success: false,
-        message: result.error.message,
-      })
-    }
+    if (!result.status) return sendFailure(response, result.error, userErrorHttpStatusMap)
 
 
     return response.status(200).json({
@@ -32,16 +23,7 @@ class UserController {
 
     const result = await UserService.logout(request.accessToken!)
 
-    if (!result.status) {
-      const httpStatus = getHttpStatusFromError(
-        result.error.code,
-        userErrorHttpStatusMap
-      )
-      return response.status(httpStatus).json({
-        success: false,
-        message: result.error.message,
-      })
-    }
+    if (!result.status) return sendFailure(response, result.error, userErrorHttpStatusMap)
 
     return response.status(200).json({
       success: true,
@@ -55,15 +37,8 @@ class UserController {
     const result = await UserService.refresh(refreshToken)
 
     if (!result.status) {
-      const httpStatus = getHttpStatusFromError(
-        result.error.code,
-        userErrorHttpStatusMap
-      )
-      return response.status(httpStatus).json({
-        success: false,
-        code: result.error.code,
-        message: result.error.message,
-      })
+      // O app usa o `code` para decidir se apaga a sessão local.
+      return sendFailure(response, result.error, userErrorHttpStatusMap, { exposeCode: true })
     }
 
     return response.status(200).json({
@@ -76,16 +51,7 @@ class UserController {
   async getProfile(request: Request, response: Response): Promise<Response> {
     const result = await UserService.getProfile(getAccessToken(request))
 
-    if (!result.status) {
-      const httpStatus = getHttpStatusFromError(
-        result.error.code,
-        userErrorHttpStatusMap
-      )
-      return response.status(httpStatus).json({
-        success: false,
-        message: result.error.message,
-      })
-    }
+    if (!result.status) return sendFailure(response, result.error, userErrorHttpStatusMap)
 
     return response.status(200).json({
       success: true,
@@ -98,16 +64,7 @@ class UserController {
 
     const result = await UserService.updateProfile(getAccessToken(request), { username })
 
-    if (!result.status) {
-      const httpStatus = getHttpStatusFromError(
-        result.error.code,
-        userErrorHttpStatusMap
-      )
-      return response.status(httpStatus).json({
-        success: false,
-        message: result.error.message,
-      })
-    }
+    if (!result.status) return sendFailure(response, result.error, userErrorHttpStatusMap)
 
     return response.status(200).json({
       success: true,
@@ -122,16 +79,7 @@ class UserController {
       request.body
     )
 
-    if (!result.status) {
-      const httpStatus = getHttpStatusFromError(
-        result.error.code,
-        userErrorHttpStatusMap
-      )
-      return response.status(httpStatus).json({
-        success: false,
-        message: result.error.message,
-      })
-    }
+    if (!result.status) return sendFailure(response, result.error, userErrorHttpStatusMap)
 
     return response.status(200).json({
       success: true,
@@ -143,16 +91,7 @@ class UserController {
   async requestPasswordReset(request: Request, response: Response): Promise<Response> {
     const result = await UserService.requestPasswordReset(request.body)
 
-    if (!result.status) {
-      const httpStatus = getHttpStatusFromError(
-        result.error.code,
-        userErrorHttpStatusMap
-      )
-      return response.status(httpStatus).json({
-        success: false,
-        message: result.error.message,
-      })
-    }
+    if (!result.status) return sendFailure(response, result.error, userErrorHttpStatusMap)
 
     return response.status(200).json({
       success: true,
