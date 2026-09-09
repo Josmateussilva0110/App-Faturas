@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
+import '../core/toast/app_toast.dart';
 import '../core/utils/formatters.dart';
+import '../data/api/api_exception.dart';
 import '../data/api/auth_storage.dart';
 import '../data/fatura_repository.dart';
 import '../data/services/profile_service.dart';
@@ -60,22 +62,42 @@ class AppState extends ChangeNotifier {
   /// it's the only one that touches the network, so waiting for it *after*
   /// the others would add its full round trip to every app launch.
   Future<void> load() async {
-    final results = await Future.wait([
-      _repository.fetchCards(),
-      _repository.fetchPurchases(),
-      _repository.fetchSalaries(),
-      _repository.fetchExpenses(),
-      _repository.fetchSpendingLimit(),
-      _fetchCurrentUser(),
-    ]);
-    cards = results[0] as List<CardModel>;
-    purchases = results[1] as List<Purchase>;
-    salaries = results[2] as List<Salary>;
-    expenses = results[3] as List<Expense>;
-    spendingLimit = results[4] as double?;
-    currentUser = results[5] as AppUser;
+    try {
+      final results = await Future.wait([
+        _repository.fetchCards(),
+        _repository.fetchPurchases(),
+        _repository.fetchSalaries(),
+        _repository.fetchExpenses(),
+        _repository.fetchSpendingLimit(),
+        _fetchCurrentUser(),
+      ]);
+      cards = results[0] as List<CardModel>;
+      purchases = results[1] as List<Purchase>;
+      salaries = results[2] as List<Salary>;
+      expenses = results[3] as List<Expense>;
+      spendingLimit = results[4] as double?;
+      currentUser = results[5] as AppUser;
+    } on ApiException catch (error) {
+      // O app abre vazio em vez de travar na splash: o usuário vê o motivo
+      // e pode tentar de novo sem ser jogado para a tela de login.
+      AppToast.error(error.message);
+      currentUser = await _fetchCurrentUser();
+    }
+
     isLoading = false;
     notifyListeners();
+  }
+
+  /// Executa uma escrita na API. Devolve null quando ela falhou, já tendo
+  /// avisado o usuário — o estado local não muda, para não divergir do
+  /// servidor e mostrar na tela algo que não foi salvo.
+  Future<T?> _guard<T>(Future<T> Function() write) async {
+    try {
+      return await write();
+    } on ApiException catch (error) {
+      AppToast.error(error.message);
+      return null;
+    }
   }
 
   /// The account behind `GET /profile`. When that call fails (offline, server
@@ -141,19 +163,28 @@ class AppState extends ChangeNotifier {
   }
 
   Future<void> addCard(String name) async {
-    final created = await _repository.createCard(name);
+    final created = await _guard(() => _repository.createCard(name));
+    if (created == null) return;
+
     cards = [...cards, created];
     notifyListeners();
   }
 
   Future<void> renameCard(String id, String name) async {
-    final updated = await _repository.renameCard(id, name);
+    final updated = await _guard(() => _repository.renameCard(id, name));
+    if (updated == null) return;
+
     cards = [for (final c in cards) if (c.id == id) updated else c];
     notifyListeners();
   }
 
   Future<void> deleteCard(String id) async {
-    await _repository.deleteCard(id);
+    final removed = await _guard(() async {
+      await _repository.deleteCard(id);
+      return true;
+    });
+    if (removed == null) return;
+
     cards = cards.where((c) => c.id != id).toList();
     notifyListeners();
   }
@@ -197,19 +228,28 @@ class AppState extends ChangeNotifier {
   double get monthlyTotal => totalFor(monthOffset);
 
   Future<void> addPurchase(Purchase draft) async {
-    final created = await _repository.createPurchase(draft);
+    final created = await _guard(() => _repository.createPurchase(draft));
+    if (created == null) return;
+
     purchases = [...purchases, created];
     notifyListeners();
   }
 
   Future<void> updatePurchase(Purchase purchase) async {
-    final updated = await _repository.updatePurchase(purchase);
+    final updated = await _guard(() => _repository.updatePurchase(purchase));
+    if (updated == null) return;
+
     purchases = [for (final p in purchases) if (p.id == updated.id) updated else p];
     notifyListeners();
   }
 
   Future<void> deletePurchase(String id) async {
-    await _repository.deletePurchase(id);
+    final removed = await _guard(() async {
+      await _repository.deletePurchase(id);
+      return true;
+    });
+    if (removed == null) return;
+
     purchases = purchases.where((p) => p.id != id).toList();
     notifyListeners();
   }

@@ -5,7 +5,7 @@ import 'core/theme/app_theme.dart';
 import 'core/toast/app_toast.dart';
 import 'data/api/auth_storage.dart';
 import 'data/api/secure_auth_storage.dart';
-import 'data/mock_fatura_repository.dart';
+import 'data/api_fatura_repository.dart';
 import 'features/shell/session_gate.dart';
 import 'state/app_state.dart';
 
@@ -24,7 +24,7 @@ class FaturaApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
       // `load` runs only once a session exists — see SessionGate.
-      create: (_) => AppState(MockFaturaRepository()),
+      create: (_) => AppState(ApiFaturaRepository()),
       child: Consumer<AppState>(
         builder: (context, appState, _) {
           return MaterialApp(

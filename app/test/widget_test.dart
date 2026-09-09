@@ -174,7 +174,8 @@ void main() {
           'data': fakeProfile(username: '', email: 'semnome@email.com'),
         }, 200);
       }
-      return jsonBody({'success': true, 'data': fakeSession()}, 200);
+      // O resto (cartões, compras) segue o handler padrão.
+      return defaultHandler(options);
     });
     await authStorage.save(AuthData.fromJson(fakeSession()));
     await _pumpApp(tester);

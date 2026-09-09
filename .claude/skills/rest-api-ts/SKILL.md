@@ -191,6 +191,11 @@ Dois pontos que importam:
 - **O log recebe o erro cru; a resposta leva mensagem genérica.** Detalhe de
   banco no log do servidor, nunca na tela — mensagem de erro de driver
   costuma revelar nome de tabela, coluna e às vezes o próprio dado.
+- **Desfecho esperado não é `console.error`.** Nome já em uso, registro não
+  encontrado, credencial errada: são respostas normais da API (409, 404,
+  401), não falhas. Registrá-los como erro faz o uso corriqueiro do app
+  poluir o log e, em produção, disparar alerta à toa. Trate esses casos
+  *antes* da linha de log.
 - **Nunca logar token, senha ou credencial.** É o vazamento mais fácil de
   cometer sem perceber, e o mais difícil de auditar depois.
 - **Sempre mapear a linha do banco para um tipo próprio** antes de devolver.

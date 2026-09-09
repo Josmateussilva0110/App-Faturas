@@ -20,3 +20,19 @@ class ProfileRoutes {
   static const String profile = '/profile';
   static const String password = '/profile/password';
 }
+
+class CardRoutes {
+  const CardRoutes._();
+
+  static const String cards = '/cards';
+
+  static String card(String id) => '/cards/$id';
+}
+
+class PurchaseRoutes {
+  const PurchaseRoutes._();
+
+  static const String purchases = '/purchases';
+
+  static String purchase(String id) => '/purchases/$id';
+}
