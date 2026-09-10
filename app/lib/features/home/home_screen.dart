@@ -27,6 +27,7 @@ class HomeScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final appState = context.watch<AppState>();
     final entries = appState.homeEntries;
+    final goalRatio = appState.spendingGoalRatio;
     final savingsColor = context.palette.iconTint(AppColors.hueSavings);
 
     return Scaffold(
@@ -49,10 +50,10 @@ class HomeScreen extends StatelessWidget {
                   '${formatMonthLabel(appState.currentAbs)} · '
                   '${entries.length == 1 ? '1 compra ativa' : '${entries.length} compras ativas'}',
               icon: Icons.trending_up,
-              goalProgress: appState.spendingGoalRatio,
-              goalLabel: appState.spendingGoalRatio == null
+              goalProgress: goalRatio,
+              goalLabel: goalRatio == null
                   ? null
-                  : 'Limite utilizado: ${(appState.spendingGoalRatio! * 100).round()}%',
+                  : 'Limite utilizado: ${(goalRatio * 100).round()}%',
               onTapGoal: () => showSpendingLimitDialog(
                 context,
                 currentLimit: appState.spendingLimit,

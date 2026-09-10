@@ -36,15 +36,19 @@ class FaturaApp extends StatelessWidget {
     return ChangeNotifierProvider(
       // `load` runs only once a session exists — see SessionGate.
       create: (_) => AppState(ApiFaturaRepository(), themeMode: initialThemeMode),
-      child: Consumer<AppState>(
-        builder: (context, appState, _) {
+      // `Selector` e não `Consumer`: o MaterialApp só depende do themeMode, e
+      // com o Consumer ele reconstruía a cada notificação do estado — trocar
+      // de mês, salvar uma compra, qualquer coisa.
+      child: Selector<AppState, ThemeMode>(
+        selector: (_, appState) => appState.themeMode,
+        builder: (context, themeMode, _) {
           return MaterialApp(
             title: 'Faturas',
             debugShowCheckedModeBanner: false,
             navigatorKey: AppToast.navigatorKey,
             theme: AppTheme.light(),
             darkTheme: AppTheme.dark(),
-            themeMode: appState.themeMode,
+            themeMode: themeMode,
             home: const SessionGate(),
           );
         },

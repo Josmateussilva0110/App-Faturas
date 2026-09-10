@@ -10,8 +10,14 @@ import 'app_typography.dart';
 class AppTheme {
   const AppTheme._();
 
-  static ThemeData light() => _build(Brightness.light);
-  static ThemeData dark() => _build(Brightness.dark);
+  // Construídos uma vez: `_build` roda um `ColorScheme.fromSeed`, caro demais
+  // para repetir a cada rebuild de quem consome o tema. Não dependem de
+  // `context` nem de `MediaQuery`, então o valor é estável pela sessão.
+  static final ThemeData _light = _build(Brightness.light);
+  static final ThemeData _dark = _build(Brightness.dark);
+
+  static ThemeData light() => _light;
+  static ThemeData dark() => _dark;
 
   static ThemeData _build(Brightness brightness) {
     final scheme = ColorScheme.fromSeed(
