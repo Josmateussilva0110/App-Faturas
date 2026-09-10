@@ -53,3 +53,11 @@ class ExpenseRoutes {
 
   static String expense(String id) => '/expenses/$id';
 }
+
+class StatementRoutes {
+  const StatementRoutes._();
+
+  static const String statements = '/statements';
+
+  static String statement(String id) => '/statements/$id';
+}

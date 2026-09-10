@@ -6,7 +6,7 @@ import {
   CreatePurchaseSchema,
   PurchaseIdParamSchema,
   UpdatePurchaseSchema,
-} from "../schemas/purchaseSchema"
+} from "../schemas/purchases/purchase"
 
 const router = Router()
 

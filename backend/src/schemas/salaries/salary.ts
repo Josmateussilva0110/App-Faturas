@@ -1,5 +1,5 @@
 import { z } from "zod"
-import { amountField, entryNameField } from "./moneyEntrySchema"
+import { amountField, entryNameField } from "../fields/money"
 
 const salaryBody = z.object({
   name: entryNameField,

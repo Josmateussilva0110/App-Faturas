@@ -30,7 +30,7 @@ src/
 ├── controllers/   # resultado do service -> HTTP. Zero regra de negócio.
 ├── services/      # regra de negócio. Nunca lança.
 ├── models/        # acesso a dados e mapeamento de linha -> tipo (opcional)
-├── schemas/       # zod, um arquivo por payload
+├── schemas/       # zod, um arquivo por payload, agrupado por domínio
 ├── middleware/    # auth, validate, rate limit, errorHandler, notFound
 ├── types/         # ServiceResult, envelope de resposta, códigos de erro
 ├── errors/        # mapa código -> status HTTP
@@ -41,6 +41,29 @@ src/
 O teste que mantém as camadas honestas: **se você precisa do objeto
 `response` dentro de um service, ou do cliente de banco dentro de um
 controller, a lógica está na camada errada.**
+
+### Como `schemas/` é organizado
+
+Uma subpasta por domínio, com os mesmos nomes de `types/` — quem procura o
+schema de cartão vai em `schemas/cards/` porque `types/cards/` existe. A pasta
+já diz que o arquivo é um schema, então o nome dele não repete a palavra.
+
+```
+schemas/
+├── fields/       # pedaços de campo reaproveitados (passwordField, amountField)
+├── auth/         # login, refresh, changePassword, passwordResetRequest
+├── users/        # updateProfile, spendingLimit
+├── cards/        # card
+├── purchases/    # purchase
+├── salaries/     # salary
+├── expenses/     # expense
+└── statements/   # statement
+```
+
+`fields/` é a única pasta que não é um domínio: ela guarda os construtores de
+campo que os payloads compõem (`entryNameField`, `amountField`,
+`usernameField`). Extrair um campo para lá vale a pena quando dois payloads
+precisam do mesmo limite — é o que impede que eles divirjam sem ninguém notar.
 
 ### Quando criar a camada de model
 
@@ -257,7 +280,7 @@ controller. Ele responde **422** com a lista de `errors` no formato do
 envelope e só chama `next()` com os dados já convertidos.
 
 ```ts
-// schemas/createCardSchema.ts
+// schemas/cards/card.ts
 export const CreateCardSchema = z.object({
   name: z.string().trim().min(1, "Informe o nome do cartão.").max(60, "Nome muito longo."),
 })
@@ -333,7 +356,7 @@ desde o início:
 ## Passo a passo para um endpoint novo
 
 1. Migration, se envolver coluna ou tabela nova
-2. Schema zod em `schemas/`, com o DTO saindo de `z.infer`
+2. Schema zod em `schemas/<domínio>/`, com o DTO saindo de `z.infer`
 3. Acesso a dados: no service mesmo, ou no model se algum dos sinais acima
    aparecer
 4. Método no service, devolvendo `ServiceResult`

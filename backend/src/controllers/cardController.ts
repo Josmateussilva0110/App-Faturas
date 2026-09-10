@@ -1,7 +1,7 @@
 import { Request, Response } from "express"
 import CardService from "../services/CardService"
 import { cardErrorHttpStatusMap } from "../errors/cardErrorHttpMapper"
-import { CardIdParam } from "../schemas/cardSchema"
+import { CardIdParam } from "../schemas/cards/card"
 import { getAccessToken } from "../utils/auth/getAccessToken"
 import { getValidatedParams } from "../utils/http/getValidatedParams"
 import { sendFailure } from "../utils/http/sendFailure"

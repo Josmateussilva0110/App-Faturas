@@ -8,6 +8,7 @@ import '../data/fatura_repository.dart';
 import '../data/services/profile_service.dart';
 import '../models/app_user.dart';
 import '../models/card_model.dart';
+import '../models/card_statement.dart';
 import '../models/expense.dart';
 import '../models/purchase.dart';
 import '../models/salary.dart';
@@ -25,6 +26,71 @@ class ExpenseRow {
   const ExpenseRow({required this.expense, required this.runningBalance});
   final Expense expense;
   final double runningBalance;
+}
+
+/// How a card's registered installments compare to the bill the user typed.
+enum StatementStatus {
+  /// No bill informed for this card in this month yet.
+  unset,
+
+  /// Within [kStatementTolerance] of the bill.
+  matched,
+
+  /// The bill is higher: purchases are missing from the app.
+  missing,
+
+  /// The bill is lower: the bill hasn't closed yet, or something is
+  /// registered twice.
+  extra,
+}
+
+/// Diferenças de centavos são a regra, não a exceção: arredondamento do
+/// banco, IOF e conversão de moeda produzem alguns centavos de sobra quase
+/// todo mês. Sem uma faixa de tolerância a conferência apontaria erro sempre,
+/// e o alerta perderia o sentido.
+const double kStatementTolerance = 1.0;
+
+/// One card's reconciliation for a given month: what the bill says, what the
+/// app has registered, and how far apart they are.
+class StatementCheck {
+  const StatementCheck({
+    required this.card,
+    required this.statement,
+    required this.registered,
+  });
+
+  final CardModel card;
+
+  /// The bill the user informed, or null when they haven't yet.
+  final CardStatement? statement;
+
+  /// Sum of the installments falling on this month for this card —
+  /// everyone's, since the bank charges the whole card together.
+  final double registered;
+
+  double? get billed => statement?.amount;
+
+  /// Bill minus registered. Positive means the app is missing purchases.
+  /// Null while no bill was informed.
+  double? get difference {
+    final bill = billed;
+    return bill == null ? null : bill - registered;
+  }
+
+  StatementStatus get status {
+    final diff = difference;
+    if (diff == null) return StatementStatus.unset;
+    if (diff.abs() <= kStatementTolerance) return StatementStatus.matched;
+    return diff > 0 ? StatementStatus.missing : StatementStatus.extra;
+  }
+
+  /// Fraction of the bill already registered, for the progress bar. Null
+  /// without a bill to measure against; can exceed 1 when [extra].
+  double? get progress {
+    final bill = billed;
+    if (bill == null || bill <= 0) return null;
+    return registered / bill;
+  }
 }
 
 /// Single source of truth for the whole app: owns the data fetched from
@@ -46,6 +112,7 @@ class AppState extends ChangeNotifier {
   List<Purchase> purchases = [];
   List<Salary> salaries = [];
   List<Expense> expenses = [];
+  List<CardStatement> statements = [];
 
   /// The user's monthly spending goal, or `null` when none is set.
   double? spendingLimit;
@@ -69,13 +136,15 @@ class AppState extends ChangeNotifier {
         _repository.fetchPurchases(),
         _repository.fetchSalaries(),
         _repository.fetchExpenses(),
+        _repository.fetchStatements(),
         _fetchCurrentUser(),
       ]);
       cards = results[0] as List<CardModel>;
       purchases = results[1] as List<Purchase>;
       salaries = results[2] as List<Salary>;
       expenses = results[3] as List<Expense>;
-      final profile = results[4] as ({AppUser user, double? spendingLimit});
+      statements = results[4] as List<CardStatement>;
+      final profile = results[5] as ({AppUser user, double? spendingLimit});
       currentUser = profile.user;
       spendingLimit = profile.spendingLimit;
     } on ApiException catch (error) {
@@ -139,6 +208,7 @@ class AppState extends ChangeNotifier {
     purchases = [];
     salaries = [];
     expenses = [];
+    statements = [];
     spendingLimit = null;
     monthOffset = 0;
     notifyListeners();
@@ -220,6 +290,14 @@ class AppState extends ChangeNotifier {
   List<PurchaseEntry> get homeEntries => activePurchases(0);
   double get homeTotal => totalFor(0);
 
+  /// Total falling on [offset] for one card only. The bank bills each card
+  /// separately, so this — not [totalFor] — is what a bill can be checked
+  /// against. Other people's purchases count: the bank charges the whole
+  /// card together, whoever made the purchase.
+  double totalForCard(int offset, String cardId) => activePurchases(offset)
+      .where((e) => e.purchase.cardId == cardId)
+      .fold(0.0, (sum, e) => sum + e.purchase.amount);
+
   /// Total considering only the user's own purchases for [offset] months
   /// from now — other people's purchases on the card don't count toward the
   /// spending goal or the deposit calculator.
@@ -265,6 +343,64 @@ class AppState extends ChangeNotifier {
     if (removed == null) return;
 
     purchases = purchases.where((p) => p.id != id).toList();
+    notifyListeners();
+  }
+
+  // ── Conferência da fatura ────────────────────────────────────────────
+  /// The reconciliation rows for [offset], one per card worth showing.
+  ///
+  /// A card only shows up when it has installments this month or a bill was
+  /// informed for it — otherwise every card ever created would linger on
+  /// every month forever.
+  List<StatementCheck> statementChecksFor(int offset) {
+    final target = currentAbs + offset;
+    final checks = <StatementCheck>[];
+
+    for (final card in cards) {
+      final registered = totalForCard(offset, card.id);
+      final statement = statementFor(card.id, target);
+      if (registered == 0 && statement == null) continue;
+
+      checks.add(StatementCheck(card: card, statement: statement, registered: registered));
+    }
+
+    return checks;
+  }
+
+  /// The bill informed for [cardId] on the absolute month [monthAbs], if any.
+  CardStatement? statementFor(String cardId, int monthAbs) {
+    for (final statement in statements) {
+      if (statement.cardId == cardId && statement.monthAbs == monthAbs) return statement;
+    }
+    return null;
+  }
+
+  /// The Monthly screen's reconciliation, for [monthOffset].
+  List<StatementCheck> get monthlyStatementChecks => statementChecksFor(monthOffset);
+
+  Future<void> saveStatement(String cardId, int monthAbs, double amount) async {
+    final saved = await _guard(() => _repository.saveStatement(cardId, monthAbs, amount));
+    if (saved == null) return;
+
+    // Substitui a linha do mesmo (cartão, mês) em vez de acrescentar: no
+    // servidor o upsert já fez isso, e duas linhas do mesmo par aqui fariam
+    // a conferência ler a errada.
+    statements = [
+      for (final s in statements)
+        if (s.cardId != cardId || s.monthAbs != monthAbs) s,
+      saved,
+    ];
+    notifyListeners();
+  }
+
+  Future<void> removeStatement(String id) async {
+    final removed = await _guard(() async {
+      await _repository.removeStatement(id);
+      return true;
+    });
+    if (removed == null) return;
+
+    statements = statements.where((s) => s.id != id).toList();
     notifyListeners();
   }
 

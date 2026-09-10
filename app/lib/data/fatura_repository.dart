@@ -1,4 +1,5 @@
 import '../models/card_model.dart';
+import '../models/card_statement.dart';
 import '../models/expense.dart';
 import '../models/purchase.dart';
 import '../models/salary.dart';
@@ -29,6 +30,17 @@ abstract class FaturaRepository {
   Future<Expense> addExpense(String name, double value);
   Future<Expense> updateExpense(String id, String name, double value);
   Future<void> removeExpense(String id);
+
+  /// As faturas informadas pelo usuário, de todos os meses — é uma linha
+  /// por cartão por mês, então a lista inteira vem de uma vez e a navegação
+  /// entre meses não toca a rede.
+  Future<List<CardStatement>> fetchStatements();
+
+  /// Grava (ou sobrescreve) a fatura de um cartão num mês. A identidade é o
+  /// par (cartão, mês): informar de novo o mesmo par atualiza o valor.
+  Future<CardStatement> saveStatement(String cardId, int monthAbs, double amount);
+
+  Future<void> removeStatement(String id);
 
   /// Grava a meta mensal de gastos do usuário com o próprio cartão (`null`
   /// limpa a meta). Compras de outras pessoas não contam para ela, então

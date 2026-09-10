@@ -78,6 +78,37 @@ void main() {
     await tester.pumpAndSettle();
   });
 
+  testWidgets('A aba Meses confere a fatura informada contra o registrado', (tester) async {
+    await _pumpApp(tester);
+
+    await tester.tap(find.widgetWithText(FilledButton, 'Entrar'));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextField).first, 'voce@email.com');
+    await tester.enterText(find.byType(TextField).last, 'senha123');
+    await tester.tap(find.widgetWithText(FilledButton, 'Entrar'));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Meses'));
+    await tester.pumpAndSettle();
+
+    // Fatura (165) e registrado (165) batem: estado "Confere".
+    expect(find.text('Conferência da fatura'.toUpperCase()), findsOneWidget);
+    expect(find.text('Confere'), findsOneWidget);
+    expect(find.text('Bateu exatamente com a fatura.'), findsOneWidget);
+
+    // O diálogo abre com o valor atual e mostra o total registrado.
+    await tester.tap(find.text('Confere'));
+    await tester.pumpAndSettle();
+    expect(find.text('Fatura · Nubank'), findsOneWidget);
+    expect(find.text('Registrado no app: R\$ 165,00'), findsOneWidget);
+
+    await tester.tap(find.widgetWithText(OutlinedButton, 'Cancelar'));
+    await tester.pumpAndSettle();
+
+    await tester.pump(const Duration(seconds: 3));
+    await tester.pumpAndSettle();
+  });
+
   testWidgets('Wrong credentials keep the user on the login screen', (tester) async {
     api.httpClientAdapter = FakeAdapter(
       (_) => jsonBody({'success': false, 'message': 'Email ou senha incorreto'}, 401),

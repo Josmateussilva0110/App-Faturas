@@ -51,8 +51,8 @@ Map<String, dynamic> fakeProfile({
 }
 
 /// Answers the endpoints the app hits at boot and after login: the profile,
-/// the card, purchase, salary and expense lists, and a session for
-/// everything else.
+/// the card, purchase, salary, expense and statement lists, and a session
+/// for everything else.
 ResponseBody defaultHandler(RequestOptions options) {
   if (options.path.contains('/profile')) {
     return jsonBody({'success': true, 'data': fakeProfile()}, 200);
@@ -68,6 +68,9 @@ ResponseBody defaultHandler(RequestOptions options) {
   }
   if (options.path.contains('/expenses')) {
     return jsonBody({'success': true, 'data': fakeExpenses()}, 200);
+  }
+  if (options.path.contains('/statements')) {
+    return jsonBody({'success': true, 'data': fakeStatements()}, 200);
   }
   return jsonBody({'success': true, 'message': 'ok', 'data': fakeSession()}, 200);
 }
@@ -105,6 +108,18 @@ List<Map<String, dynamic>> fakeSalaries() {
 List<Map<String, dynamic>> fakeExpenses() {
   return [
     {'id': 'e1', 'name': 'Internet', 'amount': 100.0},
+  ];
+}
+
+/// A fatura informada para o cartão de [fakeCards] no mês corrente.
+List<Map<String, dynamic>> fakeStatements() {
+  return [
+    {
+      'id': 'st1',
+      'card_id': 'c1',
+      'month_abs': DateTime.now().year * 12 + DateTime.now().month - 1,
+      'amount': 165.0,
+    },
   ];
 }
 

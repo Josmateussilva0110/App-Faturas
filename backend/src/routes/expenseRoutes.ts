@@ -6,7 +6,7 @@ import {
   CreateExpenseSchema,
   ExpenseIdParamSchema,
   UpdateExpenseSchema,
-} from "../schemas/expenseSchema"
+} from "../schemas/expenses/expense"
 
 const router = Router()
 

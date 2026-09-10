@@ -9,11 +9,11 @@ import '../../models/expense.dart';
 import '../../models/salary.dart';
 import '../../state/app_state.dart';
 import '../../widgets/form_section_card.dart';
+import '../../widgets/money_entry_dialog.dart';
 import '../../widgets/section_label.dart';
 import '../../widgets/total_card.dart';
 import 'widgets/add_money_row.dart';
 import 'widgets/deposit_export_dialog.dart';
-import 'widgets/money_entry_dialog.dart';
 import 'widgets/money_list_row.dart';
 
 /// Full-screen salary / fixed-expenses calculator: how much is left to save

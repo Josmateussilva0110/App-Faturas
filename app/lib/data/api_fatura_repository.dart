@@ -1,4 +1,5 @@
 import '../models/card_model.dart';
+import '../models/card_statement.dart';
 import '../models/expense.dart';
 import '../models/purchase.dart';
 import '../models/salary.dart';
@@ -10,6 +11,7 @@ import 'services/expense_service.dart' as expense_api;
 import 'services/profile_service.dart' as profile_api;
 import 'services/purchase_service.dart' as purchase_api;
 import 'services/salary_service.dart' as salary_api;
+import 'services/statement_service.dart' as statement_api;
 
 /// Repositório que fala com o backend. Todo o contrato de
 /// [FaturaRepository] tem endpoint — nada aqui é servido de memória.
@@ -124,6 +126,25 @@ class ApiFaturaRepository implements FaturaRepository {
   @override
   Future<void> removeExpense(String id) async {
     _ensureOk(await expense_api.deleteExpense(id));
+  }
+
+  // ── Faturas (conferência) ────────────────────────────────────────────
+  @override
+  Future<List<CardStatement>> fetchStatements() async {
+    return _unwrap(await statement_api.fetchStatements());
+  }
+
+  @override
+  Future<CardStatement> saveStatement(String cardId, int monthAbs, double amount) async {
+    final draft = CardStatement(id: '', cardId: cardId, monthAbs: monthAbs, amount: amount);
+    final id = _unwrap(await statement_api.saveStatement(draft));
+    // A API responde só com o id, seja criação ou atualização.
+    return draft.withId(id);
+  }
+
+  @override
+  Future<void> removeStatement(String id) async {
+    _ensureOk(await statement_api.deleteStatement(id));
   }
 
   // ── Limite de gastos ─────────────────────────────────────────────────

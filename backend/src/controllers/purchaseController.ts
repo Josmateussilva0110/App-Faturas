@@ -1,7 +1,7 @@
 import { Request, Response } from "express"
 import PurchaseService from "../services/PurchaseService"
 import { purchaseErrorHttpStatusMap } from "../errors/purchaseErrorHttpMapper"
-import { PurchaseIdParam } from "../schemas/purchaseSchema"
+import { PurchaseIdParam } from "../schemas/purchases/purchase"
 import { getAccessToken } from "../utils/auth/getAccessToken"
 import { getValidatedParams } from "../utils/http/getValidatedParams"
 import { sendFailure } from "../utils/http/sendFailure"

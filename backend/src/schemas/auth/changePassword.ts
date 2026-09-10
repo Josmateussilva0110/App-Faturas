@@ -1,5 +1,5 @@
 import { z } from "zod"
-import { passwordField } from "./passwordSchema"
+import { passwordField } from "../fields/password"
 
 export const ChangePasswordSchema = z
   .object({

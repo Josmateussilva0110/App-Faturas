@@ -1,7 +1,7 @@
 import { Request, Response } from "express"
 import ExpenseService from "../services/ExpenseService"
 import { expenseErrorHttpStatusMap } from "../errors/expenseErrorHttpMapper"
-import { ExpenseIdParam } from "../schemas/expenseSchema"
+import { ExpenseIdParam } from "../schemas/expenses/expense"
 import { getAccessToken } from "../utils/auth/getAccessToken"
 import { getValidatedParams } from "../utils/http/getValidatedParams"
 import { sendFailure } from "../utils/http/sendFailure"

@@ -6,7 +6,7 @@ import {
   CreateSalarySchema,
   SalaryIdParamSchema,
   UpdateSalarySchema,
-} from "../schemas/salarySchema"
+} from "../schemas/salaries/salary"
 
 const router = Router()
 

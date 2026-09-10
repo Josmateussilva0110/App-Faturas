@@ -2,7 +2,7 @@ import { Router } from "express"
 import CardController from "../controllers/cardController"
 import { authMiddleware } from "../middleware/auth"
 import { validate } from "../middleware/validate"
-import { CardIdParamSchema, CreateCardSchema, UpdateCardSchema } from "../schemas/cardSchema"
+import { CardIdParamSchema, CreateCardSchema, UpdateCardSchema } from "../schemas/cards/card"
 
 const router = Router()
 

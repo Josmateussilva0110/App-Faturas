@@ -1,7 +1,7 @@
 import { Request, Response } from "express"
 import SalaryService from "../services/SalaryService"
 import { salaryErrorHttpStatusMap } from "../errors/salaryErrorHttpMapper"
-import { SalaryIdParam } from "../schemas/salarySchema"
+import { SalaryIdParam } from "../schemas/salaries/salary"
 import { getAccessToken } from "../utils/auth/getAccessToken"
 import { getValidatedParams } from "../utils/http/getValidatedParams"
 import { sendFailure } from "../utils/http/sendFailure"
