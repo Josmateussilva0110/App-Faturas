@@ -7,7 +7,7 @@ import '../../core/toast/app_toast.dart';
 import '../../state/app_state.dart';
 import '../../widgets/empty_state.dart';
 import '../../widgets/section_label.dart';
-import 'card_name_dialog.dart';
+import 'card_form_dialog.dart';
 import 'widgets/card_row.dart';
 
 /// The "Cartões" tab: manage the credit cards purchases can be assigned to.
@@ -25,14 +25,13 @@ class CardsScreen extends StatelessWidget {
         actions: [
           IconButton(
             onPressed: () async {
-              final name = await showCardNameDialog(context);
-              if (name == null || !context.mounted) return;
-              try {
-                await context.read<AppState>().addCard(name);
-                AppToast.success('Cartão "$name" adicionado.');
-              } catch (_) {
-                AppToast.error('Não foi possível adicionar o cartão.');
-              }
+              final draft = await showCardDialog(context);
+              if (draft == null || !context.mounted) return;
+
+              // O AppState já avisou o usuário se falhou; só o sucesso é
+              // nosso para anunciar.
+              final added = await context.read<AppState>().addCard(draft.name, draft.hue);
+              if (added) AppToast.success('Cartão "${draft.name}" adicionado.');
             },
             icon: const Icon(Icons.add),
           ),
@@ -53,27 +52,25 @@ class CardsScreen extends StatelessWidget {
             for (final card in appState.cards) ...[
               CardRow(
                 name: card.name,
+                hue: card.resolvedHue,
                 onEdit: () async {
-                  final name = await showCardNameDialog(context, existing: card);
-                  if (name == null || !context.mounted) return;
-                  try {
-                    await context.read<AppState>().renameCard(card.id, name);
-                    AppToast.success('Cartão atualizado.');
-                  } catch (_) {
-                    AppToast.error('Não foi possível renomear o cartão.');
-                  }
+                  final draft = await showCardDialog(context, existing: card);
+                  if (draft == null || !context.mounted) return;
+
+                  final saved = await context
+                      .read<AppState>()
+                      .updateCard(card.id, draft.name, draft.hue);
+                  if (saved) AppToast.success('Cartão atualizado.');
                 },
                 onDelete: () async {
                   final hasPurchases = appState.purchases.any((p) => p.cardId == card.id);
-                  try {
-                    await context.read<AppState>().deleteCard(card.id);
-                    if (hasPurchases) {
-                      AppToast.warning('Cartão excluído — algumas compras ficaram sem cartão vinculado.');
-                    } else {
-                      AppToast.success('Cartão excluído.');
-                    }
-                  } catch (_) {
-                    AppToast.error('Não foi possível excluir o cartão.');
+                  final deleted = await context.read<AppState>().deleteCard(card.id);
+                  if (!deleted) return;
+
+                  if (hasPurchases) {
+                    AppToast.warning('Cartão excluído — algumas compras ficaram sem cartão vinculado.');
+                  } else {
+                    AppToast.success('Cartão excluído.');
                   }
                 },
               ),

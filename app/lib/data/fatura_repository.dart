@@ -12,8 +12,9 @@ import '../models/salary.dart';
 /// talks to this interface.
 abstract class FaturaRepository {
   Future<List<CardModel>> fetchCards();
-  Future<CardModel> createCard(String name);
-  Future<CardModel> renameCard(String id, String name);
+  /// [hue] nulo deixa a cor automática, derivada do nome.
+  Future<CardModel> createCard(String name, int? hue);
+  Future<CardModel> updateCard(String id, String name, int? hue);
   Future<void> deleteCard(String id);
 
   Future<List<Purchase>> fetchPurchases();

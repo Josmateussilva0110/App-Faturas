@@ -108,6 +108,7 @@ class HomeScreen extends StatelessWidget {
                 purchase: entry.purchase,
                 status: entry.status,
                 cardName: appState.cardName(entry.purchase.cardId),
+                cardHue: appState.cardHue(entry.purchase.cardId),
                 onTap: () => showEditPurchaseDialog(context, entry.purchase),
               ),
               const SizedBox(height: AppSpacing.sm),

@@ -4,6 +4,7 @@ import 'package:fatura/data/api/api_client.dart';
 import 'package:fatura/data/api/api_exception.dart';
 import 'package:fatura/data/api/token_manager.dart';
 import 'package:fatura/data/api_fatura_repository.dart';
+import 'package:fatura/core/utils/formatters.dart';
 import 'package:fatura/models/purchase.dart';
 
 import '../support/fake_api.dart';
@@ -44,14 +45,29 @@ void main() {
   });
 
   test('createCard devolve o cartão com o id do servidor', () async {
+    final adapter = FakeAdapter(
+      (_) => jsonBody({'success': true, 'data': {'id': 'c-novo'}}, 201),
+    );
+    api.httpClientAdapter = adapter;
+
+    final created = await repository.createCard('Inter', 214);
+
+    expect(created.id, 'c-novo');
+    expect(created.name, 'Inter');
+    expect(created.hue, 214);
+    expect(adapter.calls.single.data, {'name': 'Inter', 'color_hue': 214});
+  });
+
+  test('cartão sem cor escolhida cai no matiz do nome', () async {
     api.httpClientAdapter = FakeAdapter(
       (_) => jsonBody({'success': true, 'data': {'id': 'c-novo'}}, 201),
     );
 
-    final created = await repository.createCard('Inter');
+    final created = await repository.createCard('Inter', null);
 
-    expect(created.id, 'c-novo');
-    expect(created.name, 'Inter');
+    expect(created.hue, isNull);
+    // A cor existe mesmo assim: quem resolve o fallback é o próprio modelo.
+    expect(created.resolvedHue, hueForLabel('Inter'));
   });
 
   test('falha da API vira ApiException com a mensagem do servidor', () async {

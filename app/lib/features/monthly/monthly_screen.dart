@@ -38,13 +38,15 @@ class MonthlyScreen extends StatelessWidget {
     if (amount == null) {
       final existing = check.statement;
       if (existing == null) return;
-      await appState.removeStatement(existing.id);
-      AppToast.success('Fatura removida.');
+      if (await appState.removeStatement(existing.id)) {
+        AppToast.success('Fatura removida.');
+      }
       return;
     }
 
-    await appState.saveStatement(check.card.id, monthAbs, amount);
-    AppToast.success('Fatura salva.');
+    if (await appState.saveStatement(check.card.id, monthAbs, amount)) {
+      AppToast.success('Fatura salva.');
+    }
   }
 
   @override
@@ -112,6 +114,7 @@ class MonthlyScreen extends StatelessWidget {
                 purchase: entry.purchase,
                 status: entry.status,
                 cardName: appState.cardName(entry.purchase.cardId),
+                cardHue: appState.cardHue(entry.purchase.cardId),
                 alwaysShowPersonTag: true,
                 onTap: () => showEditPurchaseDialog(context, entry.purchase),
               ),

@@ -78,7 +78,7 @@ ResponseBody defaultHandler(RequestOptions options) {
 /// Um cartão, com o nome que os testes de navegação procuram.
 List<Map<String, dynamic>> fakeCards() {
   return [
-    {'id': 'c1', 'name': 'Nubank'},
+    {'id': 'c1', 'name': 'Nubank', 'color_hue': 292},
   ];
 }
 

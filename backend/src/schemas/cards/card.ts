@@ -6,6 +6,17 @@ const cardBody = z.object({
     .trim()
     .min(1, "Informe o nome do cartão.")
     .max(60, "Nome deve ter no máximo 60 caracteres."),
+
+  // Ausente ou nulo = cor automática, derivada do nome pelo app. O `default`
+  // existe para o corpo sem o campo continuar válido, já que editar usa este
+  // mesmo schema e um PUT sem a cor não deve ser recusado.
+  color_hue: z
+    .number()
+    .int("Cor inválida.")
+    .min(0, "Cor inválida.")
+    .max(359, "Cor inválida.")
+    .nullable()
+    .default(null),
 })
 
 export const CreateCardSchema = cardBody

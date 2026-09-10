@@ -35,16 +35,16 @@ class ApiFaturaRepository implements FaturaRepository {
   }
 
   @override
-  Future<CardModel> createCard(String name) async {
-    final draft = CardModel(id: '', name: name);
+  Future<CardModel> createCard(String name, int? hue) async {
+    final draft = CardModel(id: '', name: name, hue: hue);
     final id = _unwrap(await card_api.createCard(draft));
     // A API responde só com o id; o resto já está no draft.
     return draft.withId(id);
   }
 
   @override
-  Future<CardModel> renameCard(String id, String name) async {
-    final card = CardModel(id: id, name: name);
+  Future<CardModel> updateCard(String id, String name, int? hue) async {
+    final card = CardModel(id: id, name: name, hue: hue);
     _unwrap(await card_api.updateCard(card));
     return card;
   }

@@ -34,6 +34,13 @@ class AppColors {
   static const double hueCards = 184;
   static const double hueWarning = 38;
 
+  /// Matizes oferecidos no cadastro do cartão.
+  ///
+  /// Espaçados o bastante para dois cartões nunca ficarem parecidos, e
+  /// pulando a faixa amarela (40-70) pelo mesmo motivo que [hueForLabel]
+  /// pula: ela lê mal atrás do texto branco dos avatares.
+  static const List<int> cardHues = [4, 26, 96, 130, 160, 190, 214, 258, 292, 330];
+
   /// A moderately saturated tint for icons sitting on a plain surface —
   /// rich enough to read as "colorful" without shouting, and light/dark
   /// aware like the tokens above.

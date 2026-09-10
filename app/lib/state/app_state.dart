@@ -239,47 +239,73 @@ class AppState extends ChangeNotifier {
   }
 
   // ── Cards ────────────────────────────────────────────────────────────
-  String cardName(String cardId) {
+  String cardName(String cardId) => _card(cardId)?.name ?? 'Cartão removido';
+
+  /// A cor do cartão nas listas. Um cartão apagado cai no hash do rótulo
+  /// "Cartão removido", que é sempre o mesmo cinza-neutro para todos eles.
+  int cardHue(String cardId) => _card(cardId)?.resolvedHue ?? hueForLabel('Cartão removido');
+
+  CardModel? _card(String cardId) {
     for (final card in cards) {
-      if (card.id == cardId) return card.name;
+      if (card.id == cardId) return card;
     }
-    return 'Cartão removido';
+    return null;
   }
 
-  Future<void> addCard(String name) async {
-    final created = await _guard(() => _repository.createCard(name));
-    if (created == null) return;
+  // As escritas de cartão e de fatura devolvem se deram certo porque a tela
+  // mostra um toast de sucesso depois delas. Sem isso, uma falha exibia os
+  // dois toasts — o erro vindo do _guard e o sucesso vindo da tela.
+  Future<bool> addCard(String name, int? hue) async {
+    final created = await _guard(() => _repository.createCard(name, hue));
+    if (created == null) return false;
 
     cards = [...cards, created];
     notifyListeners();
+    return true;
   }
 
-  Future<void> renameCard(String id, String name) async {
-    final updated = await _guard(() => _repository.renameCard(id, name));
-    if (updated == null) return;
+  Future<bool> updateCard(String id, String name, int? hue) async {
+    final updated = await _guard(() => _repository.updateCard(id, name, hue));
+    if (updated == null) return false;
 
     cards = [for (final c in cards) if (c.id == id) updated else c];
     notifyListeners();
+    return true;
   }
 
-  Future<void> deleteCard(String id) async {
+  Future<bool> deleteCard(String id) async {
     final removed = await _guard(() async {
       await _repository.deleteCard(id);
       return true;
     });
-    if (removed == null) return;
+    if (removed == null) return false;
 
     cards = cards.where((c) => c.id != id).toList();
     notifyListeners();
+    return true;
   }
 
   // ── Purchases ────────────────────────────────────────────────────────
+  /// As parcelas que caem em [offset], da maior para a menor.
+  ///
+  /// Ordenar por valor põe na frente o que mais pesa na fatura, que é a
+  /// pergunta que a lista responde. O desempate por mês e depois por nome
+  /// não é detalhe: sem ele, duas compras de mesmo valor trocariam de lugar
+  /// a cada rebuild, já que o sort do Dart não é estável.
   List<PurchaseEntry> activePurchases(int offset) {
     final target = currentAbs + offset;
     final entries = <PurchaseEntry>[
       for (final p in purchases) (purchase: p, status: PurchaseStatus.at(p, target)),
     ].where((e) => e.status.active).toList()
-      ..sort((a, b) => b.purchase.startAbs.compareTo(a.purchase.startAbs));
+      ..sort((a, b) {
+        final byAmount = b.purchase.amount.compareTo(a.purchase.amount);
+        if (byAmount != 0) return byAmount;
+
+        final byMonth = b.purchase.startAbs.compareTo(a.purchase.startAbs);
+        if (byMonth != 0) return byMonth;
+
+        return a.purchase.name.compareTo(b.purchase.name);
+      });
     return entries;
   }
 
@@ -378,9 +404,9 @@ class AppState extends ChangeNotifier {
   /// The Monthly screen's reconciliation, for [monthOffset].
   List<StatementCheck> get monthlyStatementChecks => statementChecksFor(monthOffset);
 
-  Future<void> saveStatement(String cardId, int monthAbs, double amount) async {
+  Future<bool> saveStatement(String cardId, int monthAbs, double amount) async {
     final saved = await _guard(() => _repository.saveStatement(cardId, monthAbs, amount));
-    if (saved == null) return;
+    if (saved == null) return false;
 
     // Substitui a linha do mesmo (cartão, mês) em vez de acrescentar: no
     // servidor o upsert já fez isso, e duas linhas do mesmo par aqui fariam
@@ -391,17 +417,19 @@ class AppState extends ChangeNotifier {
       saved,
     ];
     notifyListeners();
+    return true;
   }
 
-  Future<void> removeStatement(String id) async {
+  Future<bool> removeStatement(String id) async {
     final removed = await _guard(() async {
       await _repository.removeStatement(id);
       return true;
     });
-    if (removed == null) return;
+    if (removed == null) return false;
 
     statements = statements.where((s) => s.id != id).toList();
     notifyListeners();
+    return true;
   }
 
   // ── People ───────────────────────────────────────────────────────────
@@ -547,7 +575,7 @@ class AppState extends ChangeNotifier {
 
     return [
       '💳 FATURA MENSAL',
-      '─────────────────────────────────',
+      '─────────────────────',
       '👤 $label',
       '🗓 Gerada em $dateStr às $timeStr',
       '📅 Vencimento: $due',
