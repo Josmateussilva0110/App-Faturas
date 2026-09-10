@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" fill="none">
+  <!-- Gerado por tool/generate_icons.py. Não editar à mão: as mesmas
+       constantes desenham os PNGs do launcher. -->
+  <rect width="100" height="100" rx="22" fill="#297CEF"/>
+  <g transform="translate(19 19) scale(0.62)">
+    <path d="M7 0H42A6 6 0 0 1 48 6V68L42.12 57L36.25 68L30.38 57L24.5 68L18.62 57L12.75 68L6.88 57L1 68V6A6 6 0 0 1 7 0Z" fill="#FFFFFF"/>
+  </g>
+  <rect x="24.58" y="28.3" width="15.5" height="4.03" rx="2.02" fill="#297CEF"/>
+  <rect x="24.58" y="36.98" width="19.22" height="4.03" rx="2.02" fill="#297CEF"/>
+  <circle cx="61.16" cy="61.16" r="19.84" fill="#FFFFFF"/>
+  <circle cx="61.16" cy="61.16" r="16.12" fill="#1D9E75"/>
+  <path d="M53.72 61.47L59.3 67.05L69.22 54.96" stroke="#FFFFFF"
+        stroke-width="5.27" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

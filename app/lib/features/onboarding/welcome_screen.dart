@@ -163,8 +163,8 @@ class WelcomeScreen extends StatelessWidget {
   }
 }
 
-/// The "Fatura" logo lockup: the app's icon in a tinted square next to the
-/// product name.
+/// The "Faturas" logo lockup: the launcher icon's own artwork next to the
+/// product name, so the two never drift apart.
 class _Wordmark extends StatelessWidget {
   const _Wordmark();
 
@@ -175,19 +175,11 @@ class _Wordmark extends StatelessWidget {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Container(
-          width: 34,
-          height: 34,
-          alignment: Alignment.center,
-          decoration: BoxDecoration(
-            color: scheme.primary,
-            borderRadius: BorderRadius.circular(AppRadius.sm),
-          ),
-          child: Icon(Icons.receipt_long_rounded, size: 20, color: scheme.onPrimary),
-        ),
+        // A mesma arte do ícone do launcher, gerada por tool/generate_icons.py.
+        const AppIllustration('app_mark', width: 34, height: 34, semanticLabel: 'Faturas'),
         const SizedBox(width: AppSpacing.md),
         Text(
-          'Fatura',
+          'Faturas',
           style: TextStyle(
             fontSize: 20,
             fontWeight: FontWeight.w800,

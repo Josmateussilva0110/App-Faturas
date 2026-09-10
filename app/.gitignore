@@ -46,3 +46,6 @@ app.*.map.json
 
 # Widget Preview related
 .widget_preview/
+
+# Cache do Python das ferramentas em tool/
+__pycache__/

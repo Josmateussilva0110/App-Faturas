@@ -224,7 +224,7 @@ class _ReceiptCard extends StatelessWidget {
             children: [
               const Icon(Icons.account_balance_wallet_outlined, color: _accent, size: 20),
               const SizedBox(width: AppSpacing.sm),
-              const Text('Fatura', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16, color: _text)),
+              const Text('Faturas', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16, color: _text)),
               const Spacer(),
               Text(monthLabel, style: const TextStyle(fontSize: 12, color: _muted, fontWeight: FontWeight.w600)),
             ],

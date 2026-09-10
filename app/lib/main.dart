@@ -28,7 +28,7 @@ class FaturaApp extends StatelessWidget {
       child: Consumer<AppState>(
         builder: (context, appState, _) {
           return MaterialApp(
-            title: 'Fatura',
+            title: 'Faturas',
             debugShowCheckedModeBanner: false,
             navigatorKey: AppToast.navigatorKey,
             theme: AppTheme.light(),

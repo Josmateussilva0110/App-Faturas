@@ -30,7 +30,7 @@ class HomeScreen extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Fatura'),
+        title: const Text('Faturas'),
         actions: [
           Padding(
             padding: const EdgeInsets.only(right: AppSpacing.lg),

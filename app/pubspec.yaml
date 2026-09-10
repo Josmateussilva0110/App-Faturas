@@ -1,5 +1,5 @@
 name: fatura
-description: "A new Flutter project."
+description: "Controle de faturas de cartão: compras parceladas, quem deve o quê e conferência contra a fatura do banco."
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
 publish_to: 'none' # Remove this line if you wish to publish to pub.dev

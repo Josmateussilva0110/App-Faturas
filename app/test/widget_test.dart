@@ -32,7 +32,7 @@ void main() {
   testWidgets('App opens on the welcome screen', (tester) async {
     await _pumpApp(tester);
 
-    expect(find.text('Fatura'), findsOneWidget);
+    expect(find.text('Faturas'), findsOneWidget);
     expect(find.text('Suas contas do mês,\nsob controle.'), findsOneWidget);
     expect(find.widgetWithText(FilledButton, 'Entrar'), findsOneWidget);
   });
