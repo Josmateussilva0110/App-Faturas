@@ -1,3 +1,4 @@
+import '../../core/theme/app_palette.dart';
 import 'package:flutter/material.dart';
 
 import '../../core/theme/app_colors.dart';
@@ -126,8 +127,7 @@ class _Swatch extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    final dark = Theme.of(context).brightness == Brightness.dark;
-    final color = AppColors.avatarBackground(hue, dark: dark);
+    final color = context.palette.avatarBackground(hue);
 
     return Semantics(
       selected: selected,

@@ -87,8 +87,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 const SizedBox(height: AppSpacing.md),
                 SegmentedChoice<ThemeMode>(
                   value: appState.themeMode,
-                  options: const [(ThemeMode.light, 'Claro'), (ThemeMode.dark, 'Escuro')],
-                  icons: const [Icons.light_mode_outlined, Icons.dark_mode_outlined],
+                  options: const [
+                    (ThemeMode.system, 'Sistema'),
+                    (ThemeMode.light, 'Claro'),
+                    (ThemeMode.dark, 'Escuro'),
+                  ],
+                  icons: const [
+                    Icons.brightness_auto_outlined,
+                    Icons.light_mode_outlined,
+                    Icons.dark_mode_outlined,
+                  ],
                   onChanged: (mode) => context.read<AppState>().setThemeMode(mode),
                   expand: true,
                   padding: const EdgeInsets.symmetric(vertical: 16),

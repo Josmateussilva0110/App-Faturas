@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
-import '../core/theme/app_colors.dart';
+import '../core/theme/app_palette.dart';
+import '../core/theme/app_spacing.dart';
+import '../core/theme/app_typography.dart';
 import '../core/utils/formatters.dart';
 
 /// Small pill used to label a purchase's card or person, colored by a hash
@@ -24,7 +26,7 @@ class TagChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    final dark = Theme.of(context).brightness == Brightness.dark;
+    final palette = context.palette;
 
     final Color background;
     final Color foreground;
@@ -33,26 +35,26 @@ class TagChip extends StatelessWidget {
       foreground = scheme.onSurfaceVariant;
     } else {
       final hue = hueForLabel(label);
-      background = AppColors.tagBackground(hue, dark: dark);
-      foreground = AppColors.tagForeground(hue, dark: dark);
+      background = palette.tagBackground(hue);
+      foreground = palette.tagForeground(hue);
     }
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
       decoration: BoxDecoration(
         color: background,
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(AppRadius.sm),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           if (icon != null) ...[
             Icon(icon, size: 12, color: foreground),
-            const SizedBox(width: 4),
+            const SizedBox(width: AppSpacing.xs),
           ],
           Text(
             label,
-            style: TextStyle(fontSize: 11, letterSpacing: 0.02, color: foreground),
+            style: context.text.caption.copyWith(letterSpacing: 0.02, color: foreground),
           ),
         ],
       ),

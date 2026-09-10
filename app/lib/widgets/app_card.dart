@@ -28,7 +28,7 @@ class AppCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    final radius = BorderRadius.circular(14);
+    final radius = BorderRadius.circular(AppRadius.md);
     return Material(
       color: color ?? scheme.surfaceContainerHigh,
       borderRadius: radius,
@@ -38,7 +38,7 @@ class AppCard extends StatelessWidget {
         child: Stack(
           children: [
             Padding(
-              padding: accentColor != null ? padding.add(const EdgeInsets.only(left: 4)) : padding,
+              padding: accentColor != null ? padding.add(const EdgeInsets.only(left: AppSpacing.xs)) : padding,
               child: child,
             ),
             if (accentColor != null)

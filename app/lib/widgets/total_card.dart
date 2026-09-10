@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../core/theme/app_colors.dart';
+import '../core/theme/app_palette.dart';
+import '../core/theme/app_typography.dart';
 import '../core/theme/app_spacing.dart';
 
 /// The accent-colored "kicker + big money value + meta" card used for the
@@ -53,20 +55,14 @@ class TotalCard extends StatelessWidget {
       padding: const EdgeInsets.all(AppSpacing.md),
       decoration: BoxDecoration(
         color: scheme.primary,
-        borderRadius: BorderRadius.circular(centered ? 16 : 14),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.16),
-            blurRadius: 10,
-            offset: const Offset(0, 3),
-          ),
-        ],
+        borderRadius: BorderRadius.circular(centered ? AppRadius.lg : AppRadius.md),
+        boxShadow: context.palette.shadowMedium,
       ),
-      child: centered ? _buildCentered(scheme) : _buildInline(scheme),
+      child: centered ? _buildCentered(context, scheme) : _buildInline(context, scheme),
     );
   }
 
-  Widget _buildCentered(ColorScheme scheme) {
+  Widget _buildCentered(BuildContext context, ColorScheme scheme) {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -91,7 +87,7 @@ class TotalCard extends StatelessWidget {
         const SizedBox(height: AppSpacing.xs),
         Text(
           value,
-          style: TextStyle(fontSize: valueFontSize, fontWeight: FontWeight.w800, color: scheme.onPrimary),
+          style: context.text.hero.copyWith(fontSize: valueFontSize, color: scheme.onPrimary),
         ),
         if (meta != null) ...[
           const SizedBox(height: AppSpacing.xsPlus),
@@ -99,11 +95,14 @@ class TotalCard extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3),
             decoration: BoxDecoration(
               color: scheme.onPrimary.withValues(alpha: 0.14),
-              borderRadius: BorderRadius.circular(20),
+              borderRadius: BorderRadius.circular(AppRadius.pill),
             ),
             child: Text(
               meta!,
-              style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: scheme.onPrimary.withValues(alpha: 0.95)),
+              style: context.text.caption.copyWith(
+                fontWeight: FontWeight.w600,
+                color: scheme.onPrimary.withValues(alpha: 0.95),
+              ),
             ),
           ),
         ],
@@ -111,7 +110,7 @@ class TotalCard extends StatelessWidget {
     );
   }
 
-  Widget _buildInline(ColorScheme scheme) {
+  Widget _buildInline(BuildContext context, ColorScheme scheme) {
     final overLimit = (goalProgress ?? 0) >= 1.0;
     final goalColor = overLimit ? AppColors.overLimitOnPrimary : scheme.onPrimary;
 
@@ -140,24 +139,36 @@ class TotalCard extends StatelessWidget {
         if (goalProgress == null && onTapGoal == null)
           Text(
             value,
-            style: TextStyle(fontSize: valueFontSize, fontWeight: FontWeight.w800, color: scheme.onPrimary),
+            style: context.text.hero.copyWith(fontSize: valueFontSize, color: scheme.onPrimary),
           )
         else
           Row(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
-              Text(
-                value,
-                style: TextStyle(fontSize: valueFontSize, fontWeight: FontWeight.w800, color: scheme.onPrimary),
+              // Flexible, não Text solto: num celular estreito o valor mais a
+              // meta estouravam a linha em dezenas de pixels. Encolher o
+              // número é melhor do que a faixa amarela de overflow.
+              Flexible(
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    value,
+                    style: context.text.hero.copyWith(
+                      fontSize: valueFontSize,
+                      color: scheme.onPrimary,
+                    ),
+                  ),
+                ),
               ),
-              const Spacer(),
+              const SizedBox(width: AppSpacing.md),
               InkWell(
                 onTap: onTapGoal,
-                borderRadius: BorderRadius.circular(6),
+                borderRadius: BorderRadius.circular(AppRadius.xs),
                 child: Padding(
                   padding: const EdgeInsets.symmetric(vertical: 4),
                   child: goalLabel != null
-                      ? Text(goalLabel!, style: TextStyle(fontSize: 12, color: goalColor))
+                      ? Text(goalLabel!, style: context.text.field.copyWith(color: goalColor))
                       : Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
@@ -165,7 +176,9 @@ class TotalCard extends StatelessWidget {
                             const SizedBox(width: AppSpacing.xs),
                             Text(
                               'Definir meta',
-                              style: TextStyle(fontSize: 12, color: scheme.onPrimary.withValues(alpha: 0.85)),
+                              style: context.text.field.copyWith(
+                                color: scheme.onPrimary.withValues(alpha: 0.85),
+                              ),
                             ),
                           ],
                         ),
@@ -176,7 +189,7 @@ class TotalCard extends StatelessWidget {
         if (goalProgress != null) ...[
           const SizedBox(height: AppSpacing.sm),
           ClipRRect(
-            borderRadius: BorderRadius.circular(4),
+            borderRadius: BorderRadius.circular(AppRadius.xs),
             child: LinearProgressIndicator(
               value: goalProgress!.clamp(0.0, 1.0).toDouble(),
               minHeight: 6,
@@ -189,7 +202,7 @@ class TotalCard extends StatelessWidget {
           const SizedBox(height: AppSpacing.sm),
           Text(
             meta!,
-            style: TextStyle(fontSize: 11, color: scheme.onPrimary.withValues(alpha: 0.9)),
+            style: context.text.caption.copyWith(color: scheme.onPrimary.withValues(alpha: 0.9)),
           ),
         ],
       ],

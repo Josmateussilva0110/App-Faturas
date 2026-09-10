@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../core/theme/app_spacing.dart';
+import '../core/theme/app_typography.dart';
 
 /// Small section heading, uppercase by default (e.g. "COMPRAS ATIVAS").
 /// Pass [uppercase]: false for contexts that want sentence case instead
@@ -18,9 +19,7 @@ class SectionLabel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final textColor = Theme.of(context).colorScheme.onSurfaceVariant;
-    final style = TextStyle(
-      fontWeight: FontWeight.w700,
-      fontSize: 13,
+    final style = context.text.label.copyWith(
       letterSpacing: uppercase ? 0.05 : 0,
       color: textColor,
     );

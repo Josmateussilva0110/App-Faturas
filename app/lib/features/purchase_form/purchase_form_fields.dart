@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../core/theme/app_colors.dart';
+import '../../core/theme/app_palette.dart';
 import '../../core/theme/app_spacing.dart';
 import '../../core/utils/formatters.dart';
 import '../../models/card_model.dart';
@@ -99,12 +100,12 @@ class _PurchaseFormFieldsState extends State<PurchaseFormFields> {
   Widget build(BuildContext context) {
     final monthLabel = formatMonthLabel(currentAbsoluteMonth() + _startOffset);
     final scheme = Theme.of(context).colorScheme;
-    final dark = Theme.of(context).brightness == Brightness.dark;
+    final palette = context.palette;
 
     // Softer, whiter input look used only in this form: light border that
     // turns blue on focus, instead of the app-wide input theme.
-    final fieldFill = AppColors.softSurface(scheme, dark: dark);
-    final fieldBorder = AppColors.softBorder(scheme, dark: dark);
+    final fieldFill = palette.softSurface;
+    final fieldBorder = palette.softBorder;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -262,7 +263,7 @@ class _PurchaseFormFieldsState extends State<PurchaseFormFields> {
               SectionLabel(
                 'Pagamento',
                 icon: Icons.credit_card_outlined,
-                iconColor: AppColors.iconTint(AppColors.hueCards, dark: dark),
+                iconColor: palette.iconTint(AppColors.hueCards),
                 uppercase: false,
               ),
               const SizedBox(height: AppSpacing.sm),

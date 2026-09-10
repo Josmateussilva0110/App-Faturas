@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/theme/app_spacing.dart';
+import '../../../core/theme/app_typography.dart';
 
 import '../../../widgets/app_card.dart';
 
@@ -45,12 +46,12 @@ class MoneyListRow extends StatelessWidget {
               Expanded(
                 child: Text(
                   name,
-                  style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14),
+                  style: context.text.body.copyWith(fontWeight: FontWeight.w700),
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
               const SizedBox(width: AppSpacing.smPlus),
-              Text(valueLabel, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14)),
+              Text(valueLabel, style: context.text.body.copyWith(fontWeight: FontWeight.w700)),
               IconButton(
                 onPressed: onRemove,
                 icon: const Icon(Icons.close, size: 16),
@@ -62,7 +63,7 @@ class MoneyListRow extends StatelessWidget {
             ],
           ),
           if (meta != null)
-            Text(meta!, style: TextStyle(fontSize: 11, color: scheme.onSurfaceVariant)),
+            Text(meta!, style: context.text.caption),
         ],
       ),
     );

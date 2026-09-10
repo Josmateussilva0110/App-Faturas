@@ -31,11 +31,18 @@ class _AppShellState extends State<AppShell> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: IndexedStack(index: _index, children: _tabs),
+      // Só a Home tem FAB aqui; Cartões traz o seu próprio, porque o que
+      // ele cria é outra coisa.
       floatingActionButton: _index == 0
           ? FloatingActionButton(
               onPressed: () => Navigator.of(context).push(
-                MaterialPageRoute(builder: (_) => const AddPurchaseScreen()),
+                MaterialPageRoute<void>(builder: (_) => const AddPurchaseScreen()),
               ),
+              // O IndexedStack mantém todas as abas vivas, então este FAB e
+              // o de Cartões existem ao mesmo tempo na mesma rota — sem tags
+              // distintas, o Hero do Material aborta com colisão.
+              heroTag: 'fab-purchase',
+              tooltip: 'Nova compra',
               child: const Icon(Icons.add),
             )
           : null,

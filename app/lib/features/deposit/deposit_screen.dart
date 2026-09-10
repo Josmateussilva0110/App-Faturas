@@ -1,3 +1,4 @@
+import '../../core/theme/app_palette.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -8,7 +9,10 @@ import '../../core/utils/formatters.dart';
 import '../../models/expense.dart';
 import '../../models/salary.dart';
 import '../../state/app_state.dart';
+import '../../widgets/confirm_delete_dialog.dart';
+import '../../widgets/empty_state.dart';
 import '../../widgets/form_section_card.dart';
+import '../../widgets/month_selector.dart';
 import '../../widgets/money_entry_dialog.dart';
 import '../../widgets/section_label.dart';
 import '../../widgets/total_card.dart';
@@ -77,6 +81,30 @@ class _DepositScreenState extends State<DepositScreen> {
     _expenseValue.clear();
   }
 
+  /// Excluir passa pela mesma confirmação de Cartões e Compras — aqui a
+  /// linha sumia no toque, sem pergunta e sem aviso.
+  Future<void> _removeSalary(Salary salary) async {
+    final confirmed = await showConfirmDeleteDialog(
+      context,
+      title: 'Excluir salário?',
+      message: 'Isso vai remover "${salary.name}" permanentemente.',
+    );
+    if (!confirmed || !mounted) return;
+
+    await context.read<AppState>().removeSalary(salary.id);
+  }
+
+  Future<void> _removeExpense(Expense expense) async {
+    final confirmed = await showConfirmDeleteDialog(
+      context,
+      title: 'Excluir despesa?',
+      message: 'Isso vai remover "${expense.name}" permanentemente.',
+    );
+    if (!confirmed || !mounted) return;
+
+    await context.read<AppState>().removeExpense(expense.id);
+  }
+
   Future<void> _editSalary(Salary salary) async {
     final entry = await showMoneyEntryDialog(
       context,
@@ -105,11 +133,8 @@ class _DepositScreenState extends State<DepositScreen> {
   Widget build(BuildContext context) {
     final appState = context.watch<AppState>();
     final scheme = Theme.of(context).colorScheme;
-    final dark = Theme.of(context).brightness == Brightness.dark;
-    final salaryColor = AppColors.iconTint(AppColors.hueSavings, dark: dark);
-    final expenseColor = AppColors.iconTint(AppColors.hueExpense, dark: dark);
-    final pillFill = AppColors.softSurface(scheme, dark: dark);
-    final pillBorder = AppColors.softBorder(scheme, dark: dark);
+    final salaryColor = context.palette.iconTint(AppColors.hueSavings);
+    final expenseColor = context.palette.iconTint(AppColors.hueExpense);
     final monthLabel = formatMonthLabel(appState.currentAbs + _monthOffset);
 
     final ownTotal = appState.ownTotalFor(_monthOffset);
@@ -139,154 +164,123 @@ class _DepositScreenState extends State<DepositScreen> {
           ),
         ],
       ),
-      body: ListView(
-        padding: const EdgeInsets.all(AppSpacing.lg),
-        children: [
-          Container(
-            height: 48,
-            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
-            decoration: BoxDecoration(
-              color: pillFill,
-              borderRadius: BorderRadius.circular(AppRadius.md),
-              border: Border.all(color: pillBorder),
+      body: RefreshIndicator(
+        onRefresh: () => context.read<AppState>().load(),
+        child: ListView(
+          // Sem isto, uma lista curta não rola e o gesto de puxar nunca
+          // dispara — justo no caso que mais precisa dele, o de a carga
+          // inicial ter falhado e a tela estar vazia.
+          physics: const AlwaysScrollableScrollPhysics(),
+          padding: const EdgeInsets.all(AppSpacing.lg),
+          children: [
+            MonthSelector(
+              offset: _monthOffset,
+              currentAbs: appState.currentAbs,
+              onChanged: (value) => setState(() => _monthOffset = value),
             ),
-            child: Row(
-              children: [
-                IconButton(
-                  onPressed: () => setState(() => _monthOffset -= 1),
-                  icon: const Icon(Icons.chevron_left),
-                  visualDensity: VisualDensity.compact,
-                  constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
-                  padding: EdgeInsets.zero,
-                ),
-                Expanded(
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.calendar_today_outlined, size: 16, color: scheme.onSurfaceVariant),
-                      const SizedBox(width: AppSpacing.sm),
-                      Flexible(
-                        child: Text(
-                          monthLabel,
-                          overflow: TextOverflow.ellipsis,
-                          maxLines: 1,
-                          style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                IconButton(
-                  onPressed: () => setState(() => _monthOffset += 1),
-                  icon: const Icon(Icons.chevron_right),
-                  visualDensity: VisualDensity.compact,
-                  constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
-                  padding: EdgeInsets.zero,
-                ),
-                if (_monthOffset != 0)
-                  TextButton(
-                    onPressed: () => setState(() => _monthOffset = 0),
-                    style: TextButton.styleFrom(
-                      visualDensity: VisualDensity.compact,
-                      padding: const EdgeInsets.symmetric(horizontal: 8),
+            const SizedBox(height: AppSpacing.lg),
+            FormSectionCard(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  SectionLabel('Salários', icon: Icons.payments_outlined, iconColor: salaryColor),
+                  const SizedBox(height: AppSpacing.md),
+                  if (appState.salaries.isEmpty)
+                    const EmptyState(
+                      message: 'Nenhum salário lançado.',
+                      icon: Icons.payments_outlined,
                     ),
-                    child: const Text('Hoje', style: TextStyle(fontSize: 12)),
+                  for (final salary in appState.salaries) ...[
+                    MoneyListRow(
+                      name: salary.name,
+                      valueLabel: formatMoney(salary.value),
+                      onEdit: () => _editSalary(salary),
+                      onRemove: () => _removeSalary(salary),
+                    ),
+                    const SizedBox(height: AppSpacing.sm),
+                  ],
+                  AddMoneyRow(
+                    nameController: _salaryName,
+                    valueController: _salaryValue,
+                    onAdd: _addSalary,
+                    accentColor: salaryColor,
                   ),
-              ],
-            ),
-          ),
-          const SizedBox(height: AppSpacing.lg),
-          FormSectionCard(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                SectionLabel('Salários', icon: Icons.payments_outlined, iconColor: salaryColor),
-                const SizedBox(height: AppSpacing.md),
-                for (final salary in appState.salaries) ...[
-                  MoneyListRow(
-                    name: salary.name,
-                    valueLabel: formatMoney(salary.value),
-                    onEdit: () => _editSalary(salary),
-                    onRemove: () => context.read<AppState>().removeSalary(salary.id),
-                  ),
-                  const SizedBox(height: AppSpacing.sm),
                 ],
-                AddMoneyRow(
-                  nameController: _salaryName,
-                  valueController: _salaryValue,
-                  onAdd: _addSalary,
-                  accentColor: salaryColor,
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: AppSpacing.lg),
-          FormSectionCard(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                SectionLabel('Resumo', icon: Icons.calculate_outlined, iconColor: scheme.primary),
-                const SizedBox(height: AppSpacing.md),
-                _SummaryRow(label: 'Total salários', value: formatMoney(appState.totalSalaries), color: salaryColor),
-                _SummaryRow(
-                  label: 'Meu crédito no cartão',
-                  value: '- ${formatMoney(ownTotal)}',
-                  color: scheme.error,
-                ),
-                const Divider(height: AppSpacing.lg),
-                _SummaryRow(
-                  label: 'Saldo após crédito',
-                  value: formatMoney(afterCredit),
-                  color: scheme.primary,
-                  emphasized: true,
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: AppSpacing.lg),
-          FormSectionCard(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                SectionLabel('Despesas', icon: Icons.trending_down, iconColor: expenseColor),
-                const SizedBox(height: AppSpacing.md),
-                for (final row in expenseRows) ...[
-                  MoneyListRow(
-                    name: row.expense.name,
-                    valueLabel: '- ${formatMoney(row.expense.value)}',
-                    meta: 'Saldo: ${formatMoney(row.runningBalance)}',
-                    onEdit: () => _editExpense(row.expense),
-                    onRemove: () => context.read<AppState>().removeExpense(row.expense.id),
-                  ),
-                  const SizedBox(height: AppSpacing.sm),
-                ],
-                AddMoneyRow(
-                  nameController: _expenseName,
-                  valueController: _expenseValue,
-                  onAdd: _addExpense,
-                  accentColor: expenseColor,
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: AppSpacing.xl),
-          Center(
-            child: FractionallySizedBox(
-              widthFactor: 0.6,
-              child: TotalCard(
-                kicker: 'Guardar',
-                value: formatMoney(guardar),
-                meta: monthLabel,
-                icon: Icons.savings_outlined,
-                valueFontSize: 22,
-                centered: true,
               ),
             ),
-          ),
-        ],
+            const SizedBox(height: AppSpacing.lg),
+            FormSectionCard(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  SectionLabel('Resumo', icon: Icons.calculate_outlined, iconColor: scheme.primary),
+                  const SizedBox(height: AppSpacing.md),
+                  _SummaryRow(label: 'Total salários', value: formatMoney(appState.totalSalaries), color: salaryColor),
+                  _SummaryRow(
+                    label: 'Meu crédito no cartão',
+                    value: '- ${formatMoney(ownTotal)}',
+                    color: scheme.error,
+                  ),
+                  const Divider(height: AppSpacing.lg),
+                  _SummaryRow(
+                    label: 'Saldo após crédito',
+                    value: formatMoney(afterCredit),
+                    color: scheme.primary,
+                    emphasized: true,
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: AppSpacing.lg),
+            FormSectionCard(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  SectionLabel('Despesas', icon: Icons.trending_down, iconColor: expenseColor),
+                  const SizedBox(height: AppSpacing.md),
+                  if (expenseRows.isEmpty)
+                    const EmptyState(
+                      message: 'Nenhuma despesa fixa lançada.',
+                      icon: Icons.trending_down,
+                    ),
+                  for (final row in expenseRows) ...[
+                    MoneyListRow(
+                      name: row.expense.name,
+                      valueLabel: '- ${formatMoney(row.expense.value)}',
+                      meta: 'Saldo: ${formatMoney(row.runningBalance)}',
+                      onEdit: () => _editExpense(row.expense),
+                      onRemove: () => _removeExpense(row.expense),
+                    ),
+                    const SizedBox(height: AppSpacing.sm),
+                  ],
+                  AddMoneyRow(
+                    nameController: _expenseName,
+                    valueController: _expenseValue,
+                    onAdd: _addExpense,
+                    accentColor: expenseColor,
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: AppSpacing.xl),
+            Center(
+              child: FractionallySizedBox(
+                widthFactor: 0.6,
+                child: TotalCard(
+                  kicker: 'Guardar',
+                  value: formatMoney(guardar),
+                  meta: monthLabel,
+                  icon: Icons.savings_outlined,
+                  valueFontSize: 22,
+                  centered: true,
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

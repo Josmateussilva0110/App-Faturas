@@ -1,8 +1,0 @@
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
-    <!--
-      Mesclado apenas em builds de release. O manifest de debug continua com
-      usesCleartextTraffic="true", que libera qualquer endereço local — assim
-      o `flutter run` não quebra quando o IP da sua máquina muda.
-    -->
-    <application android:networkSecurityConfig="@xml/network_security_config" />
-</manifest>

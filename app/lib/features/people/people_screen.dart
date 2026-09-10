@@ -1,3 +1,5 @@
+import '../../core/theme/app_palette.dart';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -6,7 +8,9 @@ import '../../core/theme/app_spacing.dart';
 import '../../core/utils/formatters.dart';
 import '../../state/app_state.dart';
 import '../../widgets/empty_state.dart';
+import '../../widgets/month_selector.dart';
 import '../../widgets/section_label.dart';
+import '../../widgets/total_card.dart';
 import '../share/share_bill_dialog.dart';
 import 'widgets/person_row.dart';
 
@@ -28,115 +32,60 @@ class _PeopleScreenState extends State<PeopleScreen> {
   Widget build(BuildContext context) {
     final appState = context.watch<AppState>();
     final people = appState.personSummariesFor(_monthOffset);
-    final scheme = Theme.of(context).colorScheme;
-    final dark = Theme.of(context).brightness == Brightness.dark;
-    final pillFill = AppColors.softSurface(scheme, dark: dark);
-    final pillBorder = AppColors.softBorder(scheme, dark: dark);
-    final monthLabel = formatMonthLabel(appState.currentAbs + _monthOffset);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Por pessoa')),
-      body: ListView(
-        padding: const EdgeInsets.all(AppSpacing.lg),
-        children: [
-          Container(
-            height: 48,
-            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
-            decoration: BoxDecoration(
-              color: pillFill,
-              borderRadius: BorderRadius.circular(AppRadius.md),
-              border: Border.all(color: pillBorder),
+      appBar: AppBar(title: const Text('Pessoas')),
+      body: RefreshIndicator(
+        onRefresh: () => context.read<AppState>().load(),
+        child: ListView(
+          // Sem isto, uma lista curta não rola e o gesto de puxar nunca
+          // dispara — justo no caso que mais precisa dele, o de a carga
+          // inicial ter falhado e a tela estar vazia.
+          physics: const AlwaysScrollableScrollPhysics(),
+          padding: const EdgeInsets.all(AppSpacing.lg),
+          children: [
+            MonthSelector(
+              offset: _monthOffset,
+              currentAbs: appState.currentAbs,
+              onChanged: (value) => setState(() => _monthOffset = value),
             ),
-            child: Row(
-              children: [
-                IconButton(
-                  onPressed: () => setState(() => _monthOffset -= 1),
-                  icon: const Icon(Icons.chevron_left),
-                  visualDensity: VisualDensity.compact,
-                  constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
-                  padding: EdgeInsets.zero,
-                ),
-                Expanded(
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.calendar_today_outlined, size: 16, color: scheme.onSurfaceVariant),
-                      const SizedBox(width: AppSpacing.sm),
-                      Flexible(
-                        child: Text(
-                          monthLabel,
-                          overflow: TextOverflow.ellipsis,
-                          maxLines: 1,
-                          style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                IconButton(
-                  onPressed: () => setState(() => _monthOffset += 1),
-                  icon: const Icon(Icons.chevron_right),
-                  visualDensity: VisualDensity.compact,
-                  constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
-                  padding: EdgeInsets.zero,
-                ),
-                if (_monthOffset != 0)
-                  TextButton(
-                    onPressed: () => setState(() => _monthOffset = 0),
-                    style: TextButton.styleFrom(
-                      visualDensity: VisualDensity.compact,
-                      padding: const EdgeInsets.symmetric(horizontal: 8),
-                    ),
-                    child: const Text('Hoje', style: TextStyle(fontSize: 12)),
-                  ),
-              ],
+            const SizedBox(height: AppSpacing.lg),
+            TotalCard(
+              kicker: 'Total do mês',
+              value: formatMoney(appState.totalFor(_monthOffset)),
+              meta: people.length == 1 ? '1 pessoa' : '${people.length} pessoas',
+              icon: Icons.groups_outlined,
             ),
-          ),
-          const SizedBox(height: AppSpacing.lg),
-          SectionLabel(
-            'Gastos por pessoa',
-            icon: Icons.people_outline,
-            iconColor: AppColors.iconTint(AppColors.huePeople, dark: dark),
-          ),
-          const SizedBox(height: AppSpacing.sm),
-          if (people.isEmpty)
-            const EmptyState(message: 'Nenhuma compra ativa neste mês.')
-          else
-            for (final person in people) ...[
-              PersonRow(
-                label: person.label,
-                total: person.total,
-                onShare: () => showShareBillDialog(
-                  context,
+            const SizedBox(height: AppSpacing.lg),
+            SectionLabel(
+              'Gastos por pessoa',
+              icon: Icons.people_outline,
+              iconColor: context.palette.iconTint(AppColors.huePeople),
+            ),
+            const SizedBox(height: AppSpacing.sm),
+            if (appState.loadError != null)
+              EmptyState.error(
+                message: appState.loadError!,
+                onRetry: () => context.read<AppState>().load(),
+              )
+            else if (people.isEmpty)
+              const EmptyState(message: 'Nenhuma compra ativa neste mês.')
+            else
+              for (final person in people) ...[
+                PersonRow(
                   label: person.label,
-                  rows: appState.transactionsForPersonFor(_monthOffset, person.label),
-                  subtotal: person.total,
+                  total: person.total,
+                  onShare: () => showShareBillDialog(
+                    context,
+                    label: person.label,
+                    rows: appState.transactionsForPersonFor(_monthOffset, person.label),
+                    subtotal: person.total,
+                  ),
                 ),
-              ),
-              const SizedBox(height: AppSpacing.sm),
-            ],
-          const Divider(height: AppSpacing.xl),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 4),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(Icons.swap_vert, size: 16, color: scheme.primary),
-                    const SizedBox(width: AppSpacing.xsPlus),
-                    const Text('Total geral', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15)),
-                  ],
-                ),
-                Text(
-                  formatMoney(appState.totalFor(_monthOffset)),
-                  style: TextStyle(fontWeight: FontWeight.w800, fontSize: 19, color: scheme.primary),
-                ),
+                const SizedBox(height: AppSpacing.sm),
               ],
-            ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

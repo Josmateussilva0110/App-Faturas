@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:fatura/core/utils/formatters.dart';
 import 'package:fatura/data/api/api_client.dart';
 import 'package:fatura/data/api/auth_storage.dart';
 import 'package:fatura/data/api/token_manager.dart';
@@ -15,6 +16,16 @@ import 'support/fake_api.dart';
 Future<void> _pumpApp(WidgetTester tester) async {
   await tester.pumpWidget(const FaturaApp());
   await tester.pump(const Duration(milliseconds: 300));
+  await tester.pumpAndSettle();
+}
+
+/// Completes the login form with the credentials [defaultHandler] accepts.
+Future<void> _signIn(WidgetTester tester) async {
+  await tester.tap(find.widgetWithText(FilledButton, 'Entrar'));
+  await tester.pumpAndSettle();
+  await tester.enterText(find.byType(TextField).first, 'voce@email.com');
+  await tester.enterText(find.byType(TextField).last, 'senha123');
+  await tester.tap(find.widgetWithText(FilledButton, 'Entrar'));
   await tester.pumpAndSettle();
 }
 
@@ -66,7 +77,10 @@ void main() {
 
     // The session returned by the backend is now the active one.
     expect(tokenManager.accessToken, 'access-1');
-    expect(find.text('Início'), findsOneWidget);
+    // Duas vezes de propósito: título da AppBar e rótulo da aba, que
+    // agora dizem a mesma coisa em vez de 'Faturas' e 'Início'.
+    expect(find.widgetWithText(AppBar, 'Início'), findsOneWidget);
+    expect(find.widgetWithText(NavigationBar, 'Início'), findsOneWidget);
     expect(find.text('Compras ativas'.toUpperCase()), findsOneWidget);
 
     await tester.tap(find.text('Cartões'));
@@ -104,6 +118,57 @@ void main() {
 
     await tester.tap(find.widgetWithText(OutlinedButton, 'Cancelar'));
     await tester.pumpAndSettle();
+
+    await tester.pump(const Duration(seconds: 3));
+    await tester.pumpAndSettle();
+  });
+
+  testWidgets('O seletor de mês da aba Meses navega e volta para hoje', (tester) async {
+    await _pumpApp(tester);
+    await _signIn(tester);
+
+    await tester.tap(find.text('Meses'));
+    await tester.pumpAndSettle();
+
+    final current = formatMonthLabel(currentAbsoluteMonth());
+    final next = formatMonthLabel(currentAbsoluteMonth() + 1);
+
+    // O seletor mora no corpo, não mais na AppBar: a AppBar tem o título fixo.
+    expect(find.widgetWithText(AppBar, 'Meses'), findsOneWidget);
+    expect(find.text(current), findsOneWidget);
+    // Sem sair do mês atual, "Hoje" não tem o que fazer e não aparece.
+    expect(find.text('Hoje'), findsNothing);
+
+    await tester.tap(find.byTooltip('Próximo mês'));
+    await tester.pumpAndSettle();
+    expect(find.text(next), findsOneWidget);
+    expect(find.text('Hoje'), findsOneWidget);
+
+    await tester.tap(find.text('Hoje'));
+    await tester.pumpAndSettle();
+    expect(find.text(current), findsOneWidget);
+
+    await tester.pump(const Duration(seconds: 3));
+    await tester.pumpAndSettle();
+  });
+
+  testWidgets('Puxar para baixo recarrega os dados do servidor', (tester) async {
+    final adapter = FakeAdapter(defaultHandler);
+    api.httpClientAdapter = adapter;
+
+    await _pumpApp(tester);
+    await _signIn(tester);
+
+    int cardRequests() =>
+        adapter.calls.where((c) => c.path.contains('/cards')).length;
+    final before = cardRequests();
+    expect(before, greaterThan(0));
+
+    await tester.fling(find.byType(ListView), const Offset(0, 320), 1200);
+    await tester.pumpAndSettle();
+
+    // A carga inteira roda de novo, não só a lista visível.
+    expect(cardRequests(), greaterThan(before));
 
     await tester.pump(const Duration(seconds: 3));
     await tester.pumpAndSettle();
@@ -164,7 +229,10 @@ void main() {
 
     // No welcome screen, no login: the session was restored at boot.
     expect(find.widgetWithText(FilledButton, 'Entrar'), findsNothing);
-    expect(find.text('Início'), findsOneWidget);
+    // Duas vezes de propósito: título da AppBar e rótulo da aba, que
+    // agora dizem a mesma coisa em vez de 'Faturas' e 'Início'.
+    expect(find.widgetWithText(AppBar, 'Início'), findsOneWidget);
+    expect(find.widgetWithText(NavigationBar, 'Início'), findsOneWidget);
     expect(tokenManager.accessToken, 'access-1');
   });
 

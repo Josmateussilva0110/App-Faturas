@@ -123,7 +123,7 @@ class _ToastBannerState extends State<_ToastBanner> with SingleTickerProviderSta
           child: FadeTransition(
             opacity: _controller,
             child: Padding(
-              padding: const EdgeInsets.all(12),
+              padding: const EdgeInsets.all(AppSpacing.md),
               child: Material(
                 color: Colors.transparent,
                 child: GestureDetector(
@@ -133,15 +133,22 @@ class _ToastBannerState extends State<_ToastBanner> with SingleTickerProviderSta
                   },
                   child: Container(
                     width: double.infinity,
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: AppSpacing.lg,
+                      vertical: AppSpacing.mdPlus,
+                    ),
                     decoration: BoxDecoration(
                       color: widget.background,
-                      borderRadius: BorderRadius.circular(14),
-                      boxShadow: [
+                      borderRadius: BorderRadius.circular(AppRadius.md),
+                      // Exceção deliberada ao `AppPalette.shadowMedium`, que
+                      // some no tema escuro: o fundo do toast é escuro fixo
+                      // nos dois temas, então ele precisa da sombra sempre
+                      // para se descolar do conteúdo atrás.
+                      boxShadow: const [
                         BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.2),
+                          color: Color(0x33000000),
                           blurRadius: 12,
-                          offset: const Offset(0, 4),
+                          offset: Offset(0, 4),
                         ),
                       ],
                     ),

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../core/settings/settings_storage.dart';
 import '../core/toast/app_toast.dart';
 import '../core/utils/formatters.dart';
 import '../data/api/api_exception.dart';
@@ -99,13 +100,23 @@ class StatementCheck {
 /// balance, share text, ...). Screens read it via `context.watch<AppState>()`
 /// and call its methods instead of touching the repository directly.
 class AppState extends ChangeNotifier {
-  AppState(this._repository);
+  AppState(this._repository, {ThemeMode? themeMode})
+      : themeMode = themeMode ?? ThemeMode.system;
 
   final FaturaRepository _repository;
   final int currentAbs = currentAbsoluteMonth();
 
   bool isLoading = true;
-  ThemeMode themeMode = ThemeMode.light;
+
+  /// A mensagem da última carga que falhou, ou null quando os dados na tela
+  /// vieram do servidor. É o que permite a UI dizer "não consegui buscar" em
+  /// vez de "não há nada" — sem isto, falha de rede e mês vazio produzem
+  /// exatamente a mesma tela.
+  String? loadError;
+  /// Segue o sistema até o usuário escolher outra coisa. A escolha é lida
+  /// antes do `runApp` (ver `main.dart`), para o app não abrir num tema e
+  /// piscar para outro.
+  ThemeMode themeMode;
   int monthOffset = 0;
 
   List<CardModel> cards = [];
@@ -147,10 +158,12 @@ class AppState extends ChangeNotifier {
       final profile = results[5] as ({AppUser user, double? spendingLimit});
       currentUser = profile.user;
       spendingLimit = profile.spendingLimit;
+      loadError = null;
     } on ApiException catch (error) {
       // O app abre vazio em vez de travar na splash: o usuário vê o motivo
       // e pode tentar de novo sem ser jogado para a tela de login.
       AppToast.error(error.message);
+      loadError = error.message;
       currentUser = (await _fetchCurrentUser()).user;
     }
 
@@ -204,6 +217,7 @@ class AppState extends ChangeNotifier {
   /// login doesn't briefly show the previous user's data.
   void reset() {
     isLoading = true;
+    loadError = null;
     cards = [];
     purchases = [];
     salaries = [];
@@ -230,11 +244,15 @@ class AppState extends ChangeNotifier {
   void setThemeMode(ThemeMode mode) {
     themeMode = mode;
     notifyListeners();
+    // Sem await: a UI não deve esperar o disco para trocar de tema, e falha
+    // de gravação já é engolida pela implementação de storage.
+    settingsStorage.saveThemeMode(mode);
   }
 
   // ── Month navigation (Monthly screen) ───────────────────────────────
-  void changeMonth(int delta) {
-    monthOffset += delta;
+  void setMonthOffset(int offset) {
+    if (offset == monthOffset) return;
+    monthOffset = offset;
     notifyListeners();
   }
 

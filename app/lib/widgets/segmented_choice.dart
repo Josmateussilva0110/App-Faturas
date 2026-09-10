@@ -2,10 +2,11 @@ import 'package:flutter/material.dart';
 
 import '../core/theme/app_spacing.dart';
 
-import '../core/theme/app_colors.dart';
+import '../core/theme/app_palette.dart';
 
-/// Two-option segmented toggle (e.g. "Minha compra / De outra pessoa",
-/// "Claro / Escuro"), reused by the purchase form and the profile screen.
+/// Segmented toggle over a short list of options (e.g. "Minha compra / De
+/// outra pessoa", "Sistema / Claro / Escuro"), reused by the purchase form
+/// and the profile screen.
 ///
 /// Renders as a light gray track with the selected option floating on top
 /// as a rounded, shadowed pill — not a flush 50/50 split.
@@ -42,15 +43,13 @@ class SegmentedChoice<T> extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    final dark = Theme.of(context).brightness == Brightness.dark;
-    final trackColor = AppColors.trackSurface(scheme, dark: dark);
-    const outerRadius = BorderRadius.all(Radius.circular(16));
-    const innerRadius = BorderRadius.all(Radius.circular(12));
+    final trackColor = context.palette.trackSurface;
+    final outerRadius = BorderRadius.circular(AppRadius.lg);
+    final innerRadius = BorderRadius.circular(AppRadius.md);
 
     return Container(
       width: expand ? double.infinity : null,
-      padding: const EdgeInsets.all(4),
+      padding: const EdgeInsets.all(AppSpacing.xs),
       decoration: BoxDecoration(color: trackColor, borderRadius: outerRadius),
       child: Row(
         mainAxisSize: expand ? MainAxisSize.max : MainAxisSize.min,
@@ -85,15 +84,7 @@ class SegmentedChoice<T> extends StatelessWidget {
       decoration: BoxDecoration(
         color: selected ? scheme.primary : Colors.transparent,
         borderRadius: radius,
-        boxShadow: selected
-            ? [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.18),
-                  blurRadius: 6,
-                  offset: const Offset(0, 2),
-                ),
-              ]
-            : null,
+        boxShadow: selected ? context.palette.shadowLow : null,
       ),
       child: Material(
         color: Colors.transparent,

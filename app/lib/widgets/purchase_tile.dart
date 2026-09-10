@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 
 import '../core/theme/app_spacing.dart';
 
-import '../core/theme/app_colors.dart';
+import '../core/theme/app_palette.dart';
+import '../core/theme/app_typography.dart';
 import '../core/utils/formatters.dart';
 import '../models/purchase.dart';
 import 'app_card.dart';
@@ -42,8 +43,7 @@ class PurchaseTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final showPersonTag = alwaysShowPersonTag || purchase.isOther;
-    final dark = Theme.of(context).brightness == Brightness.dark;
-    final accent = AppColors.avatarBackground(cardHue, dark: dark);
+    final accent = context.palette.avatarBackground(cardHue);
 
     return AppCard(
       onTap: onTap,
@@ -58,7 +58,7 @@ class PurchaseTile extends StatelessWidget {
               Expanded(
                 child: Text(
                   purchase.name,
-                  style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 15),
+                  style: context.text.title,
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
@@ -67,7 +67,7 @@ class PurchaseTile extends StatelessWidget {
               // valor, então é ele que explica por que a linha está ali.
               Text(
                 formatMoney(purchase.amount),
-                style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 19),
+                style: context.text.money,
               ),
             ],
           ),
@@ -114,7 +114,7 @@ class _InstallmentProgress extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    final labelStyle = TextStyle(fontSize: 11, color: scheme.onSurfaceVariant);
+    final labelStyle = context.text.caption;
 
     if (purchase.installments <= 1) {
       return Text('à vista', style: labelStyle);

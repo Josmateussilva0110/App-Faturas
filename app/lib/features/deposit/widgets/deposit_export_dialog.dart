@@ -5,6 +5,7 @@ import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:share_plus/share_plus.dart';
 
+import '../../../widgets/app_dialog.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/toast/app_toast.dart';
 import '../../../core/utils/formatters.dart';
@@ -115,70 +116,53 @@ class _DepositExportDialogState extends State<_DepositExportDialog> {
 
   @override
   Widget build(BuildContext context) {
-    return Dialog(
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 420),
-        child: Padding(
-          padding: const EdgeInsets.all(AppSpacing.lg),
-          child: SingleChildScrollView(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const Text('Exportar resumo', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 18)),
-                    IconButton(
-                      onPressed: () => Navigator.of(context).pop(),
-                      icon: const Icon(Icons.close),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: AppSpacing.sm),
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(14),
-                  child: RepaintBoundary(
-                    key: _boundaryKey,
-                    child: _ReceiptCard(
-                      monthLabel: widget.monthLabel,
-                      salaries: widget.salaries,
-                      totalSalaries: widget.totalSalaries,
-                      ownTotal: widget.ownTotal,
-                      afterCredit: widget.afterCredit,
-                      expenseRows: widget.expenseRows,
-                      guardar: widget.guardar,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: AppSpacing.lg),
-                SizedBox(
-                  width: double.infinity,
-                  child: OutlinedButton.icon(
-                    onPressed: _copyToSpreadsheet,
-                    icon: const Icon(Icons.table_chart_outlined),
-                    label: const Text('Copiar para planilha'),
-                  ),
-                ),
-                const SizedBox(height: AppSpacing.sm),
-                SizedBox(
-                  width: double.infinity,
-                  child: FilledButton.icon(
-                    onPressed: _sharing ? null : _shareAsImage,
-                    icon: _sharing
-                        ? const SizedBox(
-                            width: 16,
-                            height: 16,
-                            child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                          )
-                        : const Icon(Icons.image_outlined),
-                    label: Text(_sharing ? 'Gerando...' : 'Compartilhar como imagem'),
-                  ),
-                ),
-              ],
+    return AppDialog(
+      title: 'Exportar resumo',
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const SizedBox(height: AppSpacing.sm),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(AppRadius.md),
+            child: RepaintBoundary(
+              key: _boundaryKey,
+              child: _ReceiptCard(
+                monthLabel: widget.monthLabel,
+                salaries: widget.salaries,
+                totalSalaries: widget.totalSalaries,
+                ownTotal: widget.ownTotal,
+                afterCredit: widget.afterCredit,
+                expenseRows: widget.expenseRows,
+                guardar: widget.guardar,
+              ),
             ),
           ),
-        ),
+          const SizedBox(height: AppSpacing.lg),
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              onPressed: _copyToSpreadsheet,
+              icon: const Icon(Icons.table_chart_outlined),
+              label: const Text('Copiar para planilha'),
+            ),
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          SizedBox(
+            width: double.infinity,
+            child: FilledButton.icon(
+              onPressed: _sharing ? null : _shareAsImage,
+              icon: _sharing
+                  ? const SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                    )
+                  : const Icon(Icons.image_outlined),
+              label: Text(_sharing ? 'Gerando...' : 'Compartilhar como imagem'),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -224,9 +208,15 @@ class _ReceiptCard extends StatelessWidget {
             children: [
               const Icon(Icons.account_balance_wallet_outlined, color: _accent, size: 20),
               const SizedBox(width: AppSpacing.sm),
-              const Text('Faturas', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16, color: _text)),
+              const Text(
+                'Faturas',
+                style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16, color: _text),
+              ),
               const Spacer(),
-              Text(monthLabel, style: const TextStyle(fontSize: 12, color: _muted, fontWeight: FontWeight.w600)),
+              Text(
+                monthLabel,
+                style: const TextStyle(fontSize: 12, color: _muted, fontWeight: FontWeight.w600),
+              ),
             ],
           ),
           const SizedBox(height: AppSpacing.lg),
@@ -234,18 +224,28 @@ class _ReceiptCard extends StatelessWidget {
           for (final salary in salaries) _line(salary.name, formatMoney(salary.value)),
           const Divider(height: 20, color: Color(0xFFE2E8F0)),
           _line('Total salários', formatMoney(totalSalaries), bold: true),
-          _line('Meu crédito no cartão', '- ${formatMoney(ownTotal)}', color: const Color(0xFFB3261E)),
+          _line(
+            'Meu crédito no cartão',
+            '- ${formatMoney(ownTotal)}',
+            color: const Color(0xFFB3261E),
+          ),
           _line('Saldo após crédito', formatMoney(afterCredit), bold: true, color: _accent),
           const Divider(height: 20, color: Color(0xFFE2E8F0)),
           _header('Despesas'),
-          for (final row in expenseRows) _line(row.expense.name, '- ${formatMoney(row.expense.value)}'),
+          for (final row in expenseRows)
+            _line(row.expense.name, '- ${formatMoney(row.expense.value)}'),
           const Divider(height: 20, color: Color(0xFFE2E8F0)),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               const Text(
                 'GUARDAR',
-                style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: _muted, letterSpacing: 0.5),
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                  color: _muted,
+                  letterSpacing: 0.5,
+                ),
               ),
               Text(
                 formatMoney(guardar),
@@ -263,7 +263,12 @@ class _ReceiptCard extends StatelessWidget {
       padding: const EdgeInsets.only(bottom: 8),
       child: Text(
         label,
-        style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: _muted, letterSpacing: 0.5),
+        style: const TextStyle(
+          fontSize: 11,
+          fontWeight: FontWeight.w700,
+          color: _muted,
+          letterSpacing: 0.5,
+        ),
       ),
     );
   }
@@ -279,13 +284,21 @@ class _ReceiptCard extends StatelessWidget {
               label,
               overflow: TextOverflow.ellipsis,
               maxLines: 1,
-              style: TextStyle(fontSize: 13, color: color ?? _text, fontWeight: bold ? FontWeight.w700 : FontWeight.w500),
+              style: TextStyle(
+                fontSize: 13,
+                color: color ?? _text,
+                fontWeight: bold ? FontWeight.w700 : FontWeight.w500,
+              ),
             ),
           ),
           const SizedBox(width: AppSpacing.smPlus),
           Text(
             value,
-            style: TextStyle(fontSize: 13, color: color ?? _text, fontWeight: bold ? FontWeight.w800 : FontWeight.w600),
+            style: TextStyle(
+              fontSize: 13,
+              color: color ?? _text,
+              fontWeight: bold ? FontWeight.w800 : FontWeight.w600,
+            ),
           ),
         ],
       ),

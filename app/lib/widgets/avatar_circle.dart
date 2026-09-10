@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../core/theme/app_colors.dart';
+import '../core/theme/app_palette.dart';
 import '../core/utils/formatters.dart';
 
 /// Circular initial-letter avatar, colored by a hash of [label] (see
@@ -27,14 +28,13 @@ class AvatarCircle extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final dark = Theme.of(context).brightness == Brightness.dark;
     final tint = hue ?? hueForLabel(label);
     return Container(
       width: size,
       height: size,
       alignment: Alignment.center,
       decoration: BoxDecoration(
-        color: AppColors.avatarBackground(tint, dark: dark),
+        color: context.palette.avatarBackground(tint),
         shape: BoxShape.circle,
       ),
       child: child ??

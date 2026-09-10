@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../core/theme/app_palette.dart';
 import '../../core/theme/app_spacing.dart';
 import '../../widgets/app_illustration.dart';
 import '../../widgets/form_section_card.dart';
@@ -32,7 +33,7 @@ class WelcomeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    final dark = Theme.of(context).brightness == Brightness.dark;
+    final palette = context.palette;
 
     return Scaffold(
       body: DecoratedBox(
@@ -42,7 +43,7 @@ class WelcomeScreen extends StatelessWidget {
             end: Alignment.bottomCenter,
             stops: const [0, 0.55],
             colors: [
-              scheme.primaryContainer.withValues(alpha: dark ? 0.30 : 0.55),
+              scheme.primaryContainer.withValues(alpha: palette.dark ? 0.30 : 0.55),
               scheme.surfaceContainerLow,
             ],
           ),

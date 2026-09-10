@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../core/theme/app_colors.dart';
+import '../core/theme/app_palette.dart';
 import '../core/theme/app_spacing.dart';
 
 /// White card used to visually group one section of a form (e.g. the "Nova
@@ -14,25 +14,18 @@ class FormSectionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    final dark = Theme.of(context).brightness == Brightness.dark;
+    final palette = context.palette;
 
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(AppSpacing.lg),
       decoration: BoxDecoration(
-        color: AppColors.softSurface(scheme, dark: dark),
+        color: palette.softSurface,
         borderRadius: BorderRadius.circular(AppRadius.lg),
-        border: dark ? Border.all(color: scheme.outlineVariant) : null,
-        boxShadow: dark
-            ? null
-            : [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.04),
-                  blurRadius: 8,
-                  offset: const Offset(0, 2),
-                ),
-              ],
+        // No escuro a sombra some (ver AppPalette.shadowLow) e é a borda que
+        // separa o card do fundo.
+        border: palette.dark ? Border.all(color: palette.softBorder) : null,
+        boxShadow: palette.shadowLow,
       ),
       child: child,
     );

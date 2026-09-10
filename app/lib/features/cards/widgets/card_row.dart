@@ -1,3 +1,4 @@
+import '../../../core/theme/app_palette.dart';
 import 'package:flutter/material.dart';
 
 import '../../../core/theme/app_spacing.dart';
@@ -28,9 +29,8 @@ class CardRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final dark = Theme.of(context).brightness == Brightness.dark;
     return AppCard(
-      accentColor: AppColors.avatarBackground(hue, dark: dark),
+      accentColor: context.palette.avatarBackground(hue),
       child: Row(
         children: [
           AvatarCircle(label: name, hue: hue, child: const Icon(Icons.credit_card, color: AppColors.avatarForeground, size: 16)),

@@ -1,7 +1,9 @@
+import '../../../core/theme/app_palette.dart';
 import 'package:flutter/material.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
+import '../../../core/theme/app_typography.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../state/app_state.dart';
 import '../../../widgets/app_card.dart';
@@ -22,12 +24,12 @@ class StatementCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    final dark = Theme.of(context).brightness == Brightness.dark;
-    final style = _StatementStyle.of(check.status, scheme: scheme, dark: dark);
+    final palette = context.palette;
+    final style = _StatementStyle.of(check.status, scheme: scheme, palette: palette);
     final difference = check.difference;
 
     return AppCard(
-      color: AppColors.softSurface(scheme, dark: dark),
+      color: palette.softSurface,
       onTap: onTap,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -40,18 +42,18 @@ class StatementCard extends StatelessWidget {
               Expanded(
                 child: Text(
                   check.card.name,
-                  style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 15),
+                  style: context.text.title,
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
               const SizedBox(width: AppSpacing.sm),
-              _StatusChip(label: style.label, color: style.color, dark: dark),
+              _StatusChip(label: style.label, color: style.color, dark: palette.dark),
             ],
           ),
           if (check.progress != null) ...[
             const SizedBox(height: AppSpacing.md),
             ClipRRect(
-              borderRadius: BorderRadius.circular(4),
+              borderRadius: BorderRadius.circular(AppRadius.xs),
               child: LinearProgressIndicator(
                 value: check.progress!.clamp(0.0, 1.0).toDouble(),
                 minHeight: 6,
@@ -78,7 +80,7 @@ class StatementCard extends StatelessWidget {
           const SizedBox(height: AppSpacing.smPlus),
           Text(
             style.hint(check),
-            style: TextStyle(fontSize: 12, color: scheme.onSurfaceVariant),
+            style: context.text.field,
           ),
         ],
       ),
@@ -109,13 +111,13 @@ class _StatementStyle {
   factory _StatementStyle.of(
     StatementStatus status, {
     required ColorScheme scheme,
-    required bool dark,
+    required AppPalette palette,
   }) {
     switch (status) {
       case StatementStatus.matched:
         return _StatementStyle(
           icon: Icons.check_circle_outline,
-          color: AppColors.iconTint(AppColors.hueSavings, dark: dark),
+          color: palette.iconTint(AppColors.hueSavings),
           label: 'Confere',
           hint: (check) {
             final diff = check.difference ?? 0;
@@ -127,7 +129,7 @@ class _StatementStyle {
       case StatementStatus.missing:
         return _StatementStyle(
           icon: Icons.error_outline,
-          color: AppColors.iconTint(AppColors.hueWarning, dark: dark),
+          color: palette.iconTint(AppColors.hueWarning),
           label: 'Falta lançar',
           hint: (check) =>
               'Faltam ${formatMoney(check.difference!.abs())} em compras para lançar no app.',
@@ -165,11 +167,11 @@ class _StatusChip extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
       decoration: BoxDecoration(
         color: color.withValues(alpha: dark ? 0.22 : 0.12),
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(AppRadius.pill),
       ),
       child: Text(
         label,
-        style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: color),
+        style: context.text.caption.copyWith(fontWeight: FontWeight.w700, color: color),
       ),
     );
   }
@@ -184,17 +186,16 @@ class _Figure extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
     return Expanded(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
-          Text(label, style: TextStyle(fontSize: 11, color: scheme.onSurfaceVariant)),
+          Text(label, style: context.text.caption),
           const SizedBox(height: 2),
           Text(
             value,
-            style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: color),
+            style: context.text.body.copyWith(fontWeight: FontWeight.w700, color: color),
             overflow: TextOverflow.ellipsis,
           ),
         ],

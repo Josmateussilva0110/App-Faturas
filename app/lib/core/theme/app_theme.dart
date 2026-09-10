@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 
 import 'app_colors.dart';
+import 'app_palette.dart';
 import 'app_spacing.dart';
+import 'app_typography.dart';
 
 /// Builds the app's Material 3 themes from a single seed color, so light and
 /// dark stay in sync without hand-tuned duplicate palettes.
@@ -22,6 +24,9 @@ class AppTheme {
       useMaterial3: true,
       brightness: brightness,
       colorScheme: scheme,
+      // Os tokens do app vivem em extensões: assim todo widget os alcança
+      // por `context.palette` / `context.text`, sem passar `dark` adiante.
+      extensions: [AppPalette.of(scheme, brightness), AppTypography.of(scheme)],
       scaffoldBackgroundColor: scheme.surface,
       dividerColor: scheme.outlineVariant,
       textTheme: Typography.material2021(platform: TargetPlatform.android)
