@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../core/theme/app_spacing.dart';
+
 import '../theme/app_colors.dart';
 
 /// Global success/error/warning toast, floating at the **top** of the
@@ -146,7 +148,7 @@ class _ToastBannerState extends State<_ToastBanner> with SingleTickerProviderSta
                     child: Row(
                       children: [
                         Icon(widget.icon, color: widget.foreground, size: 20),
-                        const SizedBox(width: 12),
+                        const SizedBox(width: AppSpacing.md),
                         Expanded(
                           child: Text(
                             widget.message,

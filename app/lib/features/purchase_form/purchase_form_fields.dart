@@ -103,8 +103,8 @@ class _PurchaseFormFieldsState extends State<PurchaseFormFields> {
 
     // Softer, whiter input look used only in this form: light border that
     // turns blue on focus, instead of the app-wide input theme.
-    final fieldFill = dark ? scheme.surfaceContainerHigh : Colors.white;
-    final fieldBorder = dark ? scheme.outlineVariant : const Color(0xFFE2E8F0);
+    final fieldFill = AppColors.softSurface(scheme, dark: dark);
+    final fieldBorder = AppColors.softBorder(scheme, dark: dark);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -228,7 +228,7 @@ class _PurchaseFormFieldsState extends State<PurchaseFormFields> {
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Icon(Icons.calendar_today_outlined, size: 16, color: scheme.onSurfaceVariant),
-                          const SizedBox(width: 8),
+                          const SizedBox(width: AppSpacing.sm),
                           Flexible(
                             child: Text(
                               monthLabel,

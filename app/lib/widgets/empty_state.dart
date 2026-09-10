@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../core/theme/app_spacing.dart';
+
 /// Centered icon + message shown when a list has nothing to display.
 class EmptyState extends StatelessWidget {
   const EmptyState({super.key, required this.message, this.icon = Icons.inbox_outlined});
@@ -15,7 +17,7 @@ class EmptyState extends StatelessWidget {
       child: Column(
         children: [
           Icon(icon, size: 28, color: color),
-          const SizedBox(height: 8),
+          const SizedBox(height: AppSpacing.sm),
           Text(
             message,
             textAlign: TextAlign.center,

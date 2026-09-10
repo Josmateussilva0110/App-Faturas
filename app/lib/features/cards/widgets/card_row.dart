@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/theme/app_spacing.dart';
+
 import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../widgets/app_card.dart';
@@ -28,8 +30,8 @@ class CardRow extends StatelessWidget {
       accentColor: AppColors.avatarBackground(hueForLabel(name), dark: dark),
       child: Row(
         children: [
-          AvatarCircle(label: name, child: const Icon(Icons.credit_card, color: Colors.white, size: 16)),
-          const SizedBox(width: 10),
+          AvatarCircle(label: name, child: const Icon(Icons.credit_card, color: AppColors.avatarForeground, size: 16)),
+          const SizedBox(width: AppSpacing.smPlus),
           Expanded(
             child: Text(name, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15)),
           ),

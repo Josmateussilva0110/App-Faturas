@@ -79,7 +79,7 @@ class AppTextField extends StatelessWidget {
           children: [
             if (icon != null) ...[
               Icon(icon, size: 14, color: labelColor),
-              const SizedBox(width: 6),
+              const SizedBox(width: AppSpacing.xsPlus),
             ],
             Flexible(
               child: Text(
@@ -91,7 +91,7 @@ class AppTextField extends StatelessWidget {
             ),
           ],
         ),
-        const SizedBox(height: 6),
+        const SizedBox(height: AppSpacing.xsPlus),
         TextField(
           controller: controller,
           keyboardType: keyboardType,

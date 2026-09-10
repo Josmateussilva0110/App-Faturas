@@ -30,8 +30,8 @@ class _PeopleScreenState extends State<PeopleScreen> {
     final people = appState.personSummariesFor(_monthOffset);
     final scheme = Theme.of(context).colorScheme;
     final dark = Theme.of(context).brightness == Brightness.dark;
-    final pillFill = dark ? scheme.surfaceContainerHigh : Colors.white;
-    final pillBorder = dark ? scheme.outlineVariant : const Color(0xFFE2E8F0);
+    final pillFill = AppColors.softSurface(scheme, dark: dark);
+    final pillBorder = AppColors.softBorder(scheme, dark: dark);
     final monthLabel = formatMonthLabel(appState.currentAbs + _monthOffset);
 
     return Scaffold(
@@ -61,7 +61,7 @@ class _PeopleScreenState extends State<PeopleScreen> {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Icon(Icons.calendar_today_outlined, size: 16, color: scheme.onSurfaceVariant),
-                      const SizedBox(width: 8),
+                      const SizedBox(width: AppSpacing.sm),
                       Flexible(
                         child: Text(
                           monthLabel,
@@ -125,7 +125,7 @@ class _PeopleScreenState extends State<PeopleScreen> {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Icon(Icons.swap_vert, size: 16, color: scheme.primary),
-                    const SizedBox(width: 6),
+                    const SizedBox(width: AppSpacing.xsPlus),
                     const Text('Total geral', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15)),
                   ],
                 ),

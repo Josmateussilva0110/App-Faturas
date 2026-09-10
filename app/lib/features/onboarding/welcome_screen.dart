@@ -221,7 +221,7 @@ class _FeatureRow extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               Text(title, style: const TextStyle(fontSize: 14.5, fontWeight: FontWeight.w800)),
-              const SizedBox(height: 2),
+              const SizedBox(height: AppSpacing.xxs),
               Text(
                 description,
                 style: TextStyle(fontSize: 12.5, height: 1.35, color: scheme.onSurfaceVariant),

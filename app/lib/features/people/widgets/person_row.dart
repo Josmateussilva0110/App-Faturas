@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/theme/app_spacing.dart';
+
 import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../widgets/app_card.dart';
@@ -26,7 +28,7 @@ class PersonRow extends StatelessWidget {
       child: Row(
         children: [
           AvatarCircle(label: label),
-          const SizedBox(width: 10),
+          const SizedBox(width: AppSpacing.smPlus),
           Expanded(
             child: Text(label, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15)),
           ),

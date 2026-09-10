@@ -81,7 +81,7 @@ class HomeScreen extends StatelessWidget {
             child: Row(
               children: [
                 IconBadge(icon: Icons.savings_outlined, color: savingsColor),
-                const SizedBox(width: 12),
+                const SizedBox(width: AppSpacing.md),
                 const Expanded(
                   child: Text('Depositar', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15)),
                 ),

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/theme/app_spacing.dart';
+
 import '../../../widgets/app_card.dart';
 
 /// One salary or expense row: name, formatted value, remove button, and an
@@ -38,7 +40,7 @@ class MoneyListRow extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
-              const SizedBox(width: 10),
+              const SizedBox(width: AppSpacing.smPlus),
               Text(valueLabel, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14)),
               IconButton(
                 onPressed: onRemove,

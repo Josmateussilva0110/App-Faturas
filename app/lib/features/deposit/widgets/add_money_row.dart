@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/theme/app_spacing.dart';
+
 /// "Nome / Valor / +" inline add row, used to append both a new salary and
 /// a new expense on the Deposit screen.
 class AddMoneyRow extends StatelessWidget {
@@ -31,7 +33,7 @@ class AddMoneyRow extends StatelessWidget {
             decoration: const InputDecoration(hintText: 'Nome'),
           ),
         ),
-        const SizedBox(width: 8),
+        const SizedBox(width: AppSpacing.sm),
         Expanded(
           flex: 5,
           child: TextField(
@@ -40,7 +42,7 @@ class AddMoneyRow extends StatelessWidget {
             decoration: const InputDecoration(hintText: '0,00'),
           ),
         ),
-        const SizedBox(width: 8),
+        const SizedBox(width: AppSpacing.sm),
         IconButton.outlined(
           onPressed: onAdd,
           icon: const Icon(Icons.add),

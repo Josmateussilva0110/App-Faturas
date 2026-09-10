@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../core/theme/app_colors.dart';
 import '../core/theme/app_spacing.dart';
 
 /// The accent-colored "kicker + big money value + meta" card used for the
@@ -74,7 +75,7 @@ class TotalCard extends StatelessWidget {
           children: [
             if (icon != null) ...[
               Icon(icon, size: 13, color: scheme.onPrimary.withValues(alpha: 0.8)),
-              const SizedBox(width: 5),
+              const SizedBox(width: AppSpacing.xs),
             ],
             Text(
               kicker.toUpperCase(),
@@ -87,17 +88,17 @@ class TotalCard extends StatelessWidget {
             ),
           ],
         ),
-        const SizedBox(height: 4),
+        const SizedBox(height: AppSpacing.xs),
         Text(
           value,
           style: TextStyle(fontSize: valueFontSize, fontWeight: FontWeight.w800, color: scheme.onPrimary),
         ),
         if (meta != null) ...[
-          const SizedBox(height: 6),
+          const SizedBox(height: AppSpacing.xsPlus),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3),
             decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.14),
+              color: scheme.onPrimary.withValues(alpha: 0.14),
               borderRadius: BorderRadius.circular(20),
             ),
             child: Text(
@@ -112,7 +113,7 @@ class TotalCard extends StatelessWidget {
 
   Widget _buildInline(ColorScheme scheme) {
     final overLimit = (goalProgress ?? 0) >= 1.0;
-    final goalColor = overLimit ? const Color(0xFFFFB4AB) : Colors.white;
+    final goalColor = overLimit ? AppColors.overLimitOnPrimary : scheme.onPrimary;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -122,7 +123,7 @@ class TotalCard extends StatelessWidget {
           children: [
             if (icon != null) ...[
               Icon(icon, size: 12, color: scheme.onPrimary.withValues(alpha: 0.85)),
-              const SizedBox(width: 5),
+              const SizedBox(width: AppSpacing.xs),
             ],
             Text(
               kicker.toUpperCase(),
@@ -135,7 +136,7 @@ class TotalCard extends StatelessWidget {
             ),
           ],
         ),
-        const SizedBox(height: 6),
+        const SizedBox(height: AppSpacing.xsPlus),
         if (goalProgress == null && onTapGoal == null)
           Text(
             value,
@@ -161,7 +162,7 @@ class TotalCard extends StatelessWidget {
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             Icon(Icons.add_circle_outline, size: 13, color: scheme.onPrimary.withValues(alpha: 0.85)),
-                            const SizedBox(width: 4),
+                            const SizedBox(width: AppSpacing.xs),
                             Text(
                               'Definir meta',
                               style: TextStyle(fontSize: 12, color: scheme.onPrimary.withValues(alpha: 0.85)),
@@ -173,19 +174,19 @@ class TotalCard extends StatelessWidget {
             ],
           ),
         if (goalProgress != null) ...[
-          const SizedBox(height: 8),
+          const SizedBox(height: AppSpacing.sm),
           ClipRRect(
             borderRadius: BorderRadius.circular(4),
             child: LinearProgressIndicator(
               value: goalProgress!.clamp(0.0, 1.0).toDouble(),
               minHeight: 6,
-              backgroundColor: Colors.white.withValues(alpha: 0.25),
+              backgroundColor: scheme.onPrimary.withValues(alpha: 0.25),
               color: goalColor,
             ),
           ),
         ],
         if (meta != null) ...[
-          const SizedBox(height: 8),
+          const SizedBox(height: AppSpacing.sm),
           Text(
             meta!,
             style: TextStyle(fontSize: 11, color: scheme.onPrimary.withValues(alpha: 0.9)),

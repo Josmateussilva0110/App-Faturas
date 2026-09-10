@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../core/theme/app_colors.dart';
 import '../core/theme/app_spacing.dart';
 
 /// White card used to visually group one section of a form (e.g. the "Nova
@@ -20,7 +21,7 @@ class FormSectionCard extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(AppSpacing.lg),
       decoration: BoxDecoration(
-        color: dark ? scheme.surfaceContainerHigh : Colors.white,
+        color: AppColors.softSurface(scheme, dark: dark),
         borderRadius: BorderRadius.circular(AppRadius.lg),
         border: dark ? Border.all(color: scheme.outlineVariant) : null,
         boxShadow: dark

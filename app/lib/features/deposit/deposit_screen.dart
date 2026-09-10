@@ -68,8 +68,8 @@ class _DepositScreenState extends State<DepositScreen> {
     final dark = Theme.of(context).brightness == Brightness.dark;
     final salaryColor = AppColors.iconTint(AppColors.hueSavings, dark: dark);
     final expenseColor = AppColors.iconTint(AppColors.hueExpense, dark: dark);
-    final pillFill = dark ? scheme.surfaceContainerHigh : Colors.white;
-    final pillBorder = dark ? scheme.outlineVariant : const Color(0xFFE2E8F0);
+    final pillFill = AppColors.softSurface(scheme, dark: dark);
+    final pillBorder = AppColors.softBorder(scheme, dark: dark);
     final monthLabel = formatMonthLabel(appState.currentAbs + _monthOffset);
 
     final ownTotal = appState.ownTotalFor(_monthOffset);
@@ -124,7 +124,7 @@ class _DepositScreenState extends State<DepositScreen> {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Icon(Icons.calendar_today_outlined, size: 16, color: scheme.onSurfaceVariant),
-                      const SizedBox(width: 8),
+                      const SizedBox(width: AppSpacing.sm),
                       Flexible(
                         child: Text(
                           monthLabel,

@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
 
+import '../core/theme/app_spacing.dart';
+
+import '../core/theme/app_colors.dart';
+
 /// Two-option segmented toggle (e.g. "Minha compra / De outra pessoa",
 /// "Claro / Escuro"), reused by the purchase form and the profile screen.
 ///
@@ -40,7 +44,7 @@ class SegmentedChoice<T> extends StatelessWidget {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final dark = Theme.of(context).brightness == Brightness.dark;
-    final trackColor = dark ? scheme.surfaceContainerHighest : const Color(0xFFF0F1F5);
+    final trackColor = AppColors.trackSurface(scheme, dark: dark);
     const outerRadius = BorderRadius.all(Radius.circular(16));
     const innerRadius = BorderRadius.all(Radius.circular(12));
 
@@ -52,7 +56,7 @@ class SegmentedChoice<T> extends StatelessWidget {
         mainAxisSize: expand ? MainAxisSize.max : MainAxisSize.min,
         children: [
           for (var i = 0; i < options.length; i++) ...[
-            if (i > 0) const SizedBox(width: 4),
+            if (i > 0) const SizedBox(width: AppSpacing.xs),
             _segment(
               context,
               label: options[i].$2,
@@ -105,7 +109,7 @@ class SegmentedChoice<T> extends StatelessWidget {
               children: [
                 if (icon != null) ...[
                   Icon(icon, size: fontSize + 3, color: foreground),
-                  const SizedBox(width: 6),
+                  const SizedBox(width: AppSpacing.xsPlus),
                 ],
                 Flexible(
                   child: Text(

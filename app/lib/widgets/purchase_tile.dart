@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../core/theme/app_spacing.dart';
+
 import '../core/theme/app_colors.dart';
 import '../core/utils/formatters.dart';
 import '../models/purchase.dart';
@@ -42,8 +44,8 @@ class PurchaseTile extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          AvatarCircle(label: purchase.name, child: const Icon(Icons.shopping_bag_outlined, color: Colors.white, size: 16)),
-          const SizedBox(width: 10),
+          AvatarCircle(label: purchase.name, child: const Icon(Icons.shopping_bag_outlined, color: AppColors.avatarForeground, size: 16)),
+          const SizedBox(width: AppSpacing.smPlus),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -58,14 +60,14 @@ class PurchaseTile extends StatelessWidget {
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
-                    const SizedBox(width: 10),
+                    const SizedBox(width: AppSpacing.smPlus),
                     Text(
                       formatMoney(purchase.amount),
                       style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15),
                     ),
                   ],
                 ),
-                const SizedBox(height: 6),
+                const SizedBox(height: AppSpacing.xsPlus),
                 Wrap(
                   spacing: 6,
                   runSpacing: 4,

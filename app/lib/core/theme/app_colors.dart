@@ -41,6 +41,31 @@ class AppColors {
     return HSLColor.fromAHSL(1, hue, 0.60, dark ? 0.68 : 0.42).toColor();
   }
 
+  // ── Superfícies suaves ──────────────────────────────────────────────
+  // No claro o app usa branco puro sobre o cinza da página, o que o
+  // ColorScheme gerado não oferece; no escuro os tokens do próprio esquema
+  // já resolvem. Ficam aqui para a decisão existir num lugar só.
+
+  /// Fundo de campos de formulário e "pílulas" sobre a página.
+  static Color softSurface(ColorScheme scheme, {required bool dark}) {
+    return dark ? scheme.surfaceContainerHigh : Colors.white;
+  }
+
+  /// Borda desses mesmos elementos.
+  static Color softBorder(ColorScheme scheme, {required bool dark}) {
+    return dark ? scheme.outlineVariant : const Color(0xFFE2E8F0);
+  }
+
+  /// Trilho de fundo do seletor segmentado.
+  static Color trackSurface(ColorScheme scheme, {required bool dark}) {
+    return dark ? scheme.surfaceContainerHighest : const Color(0xFFF0F1F5);
+  }
+
+  /// Destaque do valor quando o gasto passa do limite, sobre o card
+  /// primário. Não usa `scheme.error` porque o card já é colorido e a cor de
+  /// erro do esquema não contrasta com ele.
+  static const Color overLimitOnPrimary = Color(0xFFFFB4AB);
+
   /// A fixed, fairly dark saturated fill for toast/snackbar backgrounds.
   /// Deliberately not light/dark-mode aware — a floating toast wants strong,
   /// consistent contrast with its white text regardless of the app's theme.

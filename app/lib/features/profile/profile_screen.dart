@@ -59,7 +59,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             child: Row(
               children: [
                 AvatarCircle(label: appState.currentUser.name, size: 56),
-                const SizedBox(width: 14),
+                const SizedBox(width: AppSpacing.mdPlus),
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisSize: MainAxisSize.min,

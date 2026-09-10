@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../core/theme/app_spacing.dart';
+
 /// Small section heading, uppercase by default (e.g. "COMPRAS ATIVAS").
 /// Pass [uppercase]: false for contexts that want sentence case instead
 /// (e.g. "Quem comprou"). The text always stays a muted gray; pass
@@ -28,7 +30,7 @@ class SectionLabel extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         Icon(icon, size: 14, color: iconColor ?? textColor),
-        const SizedBox(width: 6),
+        const SizedBox(width: AppSpacing.xsPlus),
         Text(label, style: style),
       ],
     );

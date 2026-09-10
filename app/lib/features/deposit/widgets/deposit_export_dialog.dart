@@ -223,13 +223,13 @@ class _ReceiptCard extends StatelessWidget {
           Row(
             children: [
               const Icon(Icons.account_balance_wallet_outlined, color: _accent, size: 20),
-              const SizedBox(width: 8),
+              const SizedBox(width: AppSpacing.sm),
               const Text('Fatura', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16, color: _text)),
               const Spacer(),
               Text(monthLabel, style: const TextStyle(fontSize: 12, color: _muted, fontWeight: FontWeight.w600)),
             ],
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: AppSpacing.lg),
           _header('Salários'),
           for (final salary in salaries) _line(salary.name, formatMoney(salary.value)),
           const Divider(height: 20, color: Color(0xFFE2E8F0)),
@@ -282,7 +282,7 @@ class _ReceiptCard extends StatelessWidget {
               style: TextStyle(fontSize: 13, color: color ?? _text, fontWeight: bold ? FontWeight.w700 : FontWeight.w500),
             ),
           ),
-          const SizedBox(width: 10),
+          const SizedBox(width: AppSpacing.smPlus),
           Text(
             value,
             style: TextStyle(fontSize: 13, color: color ?? _text, fontWeight: bold ? FontWeight.w800 : FontWeight.w600),
