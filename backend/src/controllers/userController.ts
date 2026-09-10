@@ -73,6 +73,18 @@ class UserController {
     })
   }
 
+  async updateSpendingLimit(request: Request, response: Response): Promise<Response> {
+    const result = await UserService.updateSpendingLimit(getAccessToken(request), request.body)
+
+    if (!result.status) return sendFailure(response, result.error, userErrorHttpStatusMap)
+
+    return response.status(200).json({
+      success: true,
+      message: "Limite de gastos atualizado com sucesso.",
+      data: result.data,
+    })
+  }
+
   async changePassword(request: Request, response: Response): Promise<Response> {
     const result = await UserService.changePassword(
       getAccessToken(request),

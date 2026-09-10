@@ -5,6 +5,7 @@ import { UserErrorCode } from "../types/code/userCode"
 import { AuthTokens } from "../types/auth/auth.types"
 import { UpdatedUser, UserProfile } from "../types/users/profile"
 import { ChangePasswordDTO } from "../schemas/changePasswordSchema"
+import { UpdateSpendingLimitDTO } from "../schemas/spendingLimitSchema"
 import { PasswordResetRequestDTO } from "../schemas/passwordResetRequestSchema"
 import { getUserIdFromAccessToken } from "../utils/auth/accessToken"
 import { isRefreshTokenReuseOrRevoked } from "../utils/auth/authErrors"
@@ -234,6 +235,66 @@ class UserService {
                 error: {
                     code: UserErrorCode.USER_UPDATE_FAILED,
                     message: "Erro ao atualizar perfil do usuário.",
+                },
+            }
+        }
+    }
+
+
+    /**
+     * Grava a meta mensal de gastos. `null` limpa a meta — é por isso que o
+     * campo entra por rota própria e não por `updateProfile`, que exige
+     * `username` e obrigaria o app a reenviar o nome só para mexer nisso.
+     */
+    async updateSpendingLimit(
+        accessToken: string,
+        payload: UpdateSpendingLimitDTO
+    ): Promise<ServiceResult<UpdatedUser, UserErrorCode>> {
+        try {
+            const userId = getUserIdFromAccessToken(accessToken)
+
+            if (!userId) {
+                return {
+                    status: false,
+                    error: {
+                        code: UserErrorCode.USER_UPDATE_FAILED,
+                        message: "Sessão inválida.",
+                    },
+                }
+            }
+
+            const supabase = createSupabaseClientForUser(accessToken)
+
+            const { data, error } = await supabase
+                .from("users")
+                .update({ spending_limit: payload.spending_limit })
+                .eq("id", userId)
+                .select("id")
+                .single()
+
+            if (error || !data) {
+                console.error("[UserService.updateSpendingLimit]", error)
+                return {
+                    status: false,
+                    error: {
+                        code: UserErrorCode.USER_UPDATE_FAILED,
+                        message: "Não foi possível salvar o limite de gastos.",
+                    },
+                }
+            }
+
+            return {
+                status: true,
+                data: { id: data.id },
+            }
+        } catch (error) {
+            console.error("[UserService.updateSpendingLimit] error:", error)
+
+            return {
+                status: false,
+                error: {
+                    code: UserErrorCode.USER_UPDATE_FAILED,
+                    message: "Erro ao salvar limite de gastos.",
                 },
             }
         }

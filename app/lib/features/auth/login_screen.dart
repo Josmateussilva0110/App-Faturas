@@ -16,8 +16,7 @@ import '../shell/app_entry.dart';
 /// A successful login starts the session (`startSession`), so every later
 /// call made through `requestData` carries the token — and gets refreshed
 /// automatically when it expires. The session is then stored, so the user
-/// stays signed in across restarts until they sign out. The app's *data*
-/// still comes from `MockFaturaRepository`; auth and the profile are real.
+/// stays signed in across restarts until they sign out.
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
 

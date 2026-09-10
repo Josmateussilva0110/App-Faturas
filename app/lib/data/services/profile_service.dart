@@ -32,6 +32,18 @@ Future<ApiResponse<String>> updateProfile({required String username}) {
   );
 }
 
+/// `PUT /profile/spending-limit`.
+///
+/// [limit] nulo limpa a meta. A leitura não tem endpoint próprio: o valor
+/// atual já vem em `GET /profile`.
+Future<ApiResponse<Object?>> updateSpendingLimit(double? limit) {
+  return requestData<Object?>(
+    endpoint: ProfileRoutes.spendingLimit,
+    method: 'PUT',
+    data: {'spending_limit': limit},
+  );
+}
+
 /// `PUT /profile/password`.
 ///
 /// [currentPassword] is optional because the backend also serves the

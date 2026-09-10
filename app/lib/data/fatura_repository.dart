@@ -5,10 +5,10 @@ import '../models/salary.dart';
 
 /// Data source contract for the whole app.
 ///
-/// [MockFaturaRepository] is the only implementation today. When a backend
-/// exists, add e.g. `HttpFaturaRepository implements FaturaRepository` and
-/// swap the single instantiation in `main.dart` — nothing else needs to
-/// change, since [AppState] only ever talks to this interface.
+/// [ApiFaturaRepository] is the only implementation. Swapping in another one
+/// (a fake for tests, an offline cache) is the single instantiation in
+/// `main.dart` — nothing else needs to change, since [AppState] only ever
+/// talks to this interface.
 abstract class FaturaRepository {
   Future<List<CardModel>> fetchCards();
   Future<CardModel> createCard(String name);
@@ -22,15 +22,20 @@ abstract class FaturaRepository {
 
   Future<List<Salary>> fetchSalaries();
   Future<Salary> addSalary(String name, double value);
+  Future<Salary> updateSalary(String id, String name, double value);
   Future<void> removeSalary(String id);
 
   Future<List<Expense>> fetchExpenses();
   Future<Expense> addExpense(String name, double value);
+  Future<Expense> updateExpense(String id, String name, double value);
   Future<void> removeExpense(String id);
 
-  /// The user's monthly spending goal for their own card purchases (`null`
-  /// when none is set). Purchases made by other people don't count toward
-  /// it, so this is intentionally separate from any per-card credit limit.
-  Future<double?> fetchSpendingLimit();
+  /// Grava a meta mensal de gastos do usuário com o próprio cartão (`null`
+  /// limpa a meta). Compras de outras pessoas não contam para ela, então
+  /// isso é de propósito separado do limite de crédito de cada cartão.
+  ///
+  /// Não há `fetchSpendingLimit`: o valor atual chega junto de `GET
+  /// /profile`, que [AppState.load] já dispara — buscá-lo à parte custaria
+  /// um segundo round trip idêntico em todo boot do app.
   Future<void> setSpendingLimit(double? limit);
 }

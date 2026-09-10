@@ -5,20 +5,15 @@ import '../models/salary.dart';
 import 'api/api_exception.dart';
 import 'api/api_response.dart';
 import 'fatura_repository.dart';
-import 'mock_fatura_repository.dart';
 import 'services/card_service.dart' as card_api;
+import 'services/expense_service.dart' as expense_api;
+import 'services/profile_service.dart' as profile_api;
 import 'services/purchase_service.dart' as purchase_api;
+import 'services/salary_service.dart' as salary_api;
 
-/// Repositório que fala com o backend.
-///
-/// Hoje só cartões e compras têm endpoint. Salários, despesas e o limite de
-/// gastos continuam em memória, delegados a [_local] — quando as rotas
-/// existirem, é só trocar cada método aqui e apagar a delegação.
+/// Repositório que fala com o backend. Todo o contrato de
+/// [FaturaRepository] tem endpoint — nada aqui é servido de memória.
 class ApiFaturaRepository implements FaturaRepository {
-  ApiFaturaRepository({FaturaRepository? local}) : _local = local ?? MockFaturaRepository();
-
-  final FaturaRepository _local;
-
   /// Converte o envelope em valor, ou lança com a mensagem do servidor.
   T _unwrap<T>(ApiResponse<T> response) {
     if (!response.success || response.data == null) {
@@ -80,28 +75,61 @@ class ApiFaturaRepository implements FaturaRepository {
     _ensureOk(await purchase_api.deletePurchase(id));
   }
 
-  // ── Ainda sem endpoint no backend ────────────────────────────────────
+  // ── Salários ─────────────────────────────────────────────────────────
   @override
-  Future<List<Salary>> fetchSalaries() => _local.fetchSalaries();
+  Future<List<Salary>> fetchSalaries() async {
+    return _unwrap(await salary_api.fetchSalaries());
+  }
 
   @override
-  Future<Salary> addSalary(String name, double value) => _local.addSalary(name, value);
+  Future<Salary> addSalary(String name, double value) async {
+    final draft = Salary(id: '', name: name, value: value);
+    final id = _unwrap(await salary_api.createSalary(draft));
+    // A API responde só com o id; o resto já está no draft.
+    return draft.withId(id);
+  }
 
   @override
-  Future<void> removeSalary(String id) => _local.removeSalary(id);
+  Future<Salary> updateSalary(String id, String name, double value) async {
+    final salary = Salary(id: id, name: name, value: value);
+    _unwrap(await salary_api.updateSalary(salary));
+    return salary;
+  }
 
   @override
-  Future<List<Expense>> fetchExpenses() => _local.fetchExpenses();
+  Future<void> removeSalary(String id) async {
+    _ensureOk(await salary_api.deleteSalary(id));
+  }
+
+  // ── Despesas ─────────────────────────────────────────────────────────
+  @override
+  Future<List<Expense>> fetchExpenses() async {
+    return _unwrap(await expense_api.fetchExpenses());
+  }
 
   @override
-  Future<Expense> addExpense(String name, double value) => _local.addExpense(name, value);
+  Future<Expense> addExpense(String name, double value) async {
+    final draft = Expense(id: '', name: name, value: value);
+    final id = _unwrap(await expense_api.createExpense(draft));
+    return draft.withId(id);
+  }
 
   @override
-  Future<void> removeExpense(String id) => _local.removeExpense(id);
+  Future<Expense> updateExpense(String id, String name, double value) async {
+    final expense = Expense(id: id, name: name, value: value);
+    _unwrap(await expense_api.updateExpense(expense));
+    return expense;
+  }
 
   @override
-  Future<double?> fetchSpendingLimit() => _local.fetchSpendingLimit();
+  Future<void> removeExpense(String id) async {
+    _ensureOk(await expense_api.deleteExpense(id));
+  }
 
+  // ── Limite de gastos ─────────────────────────────────────────────────
+  // Só a escrita: a leitura vem junto de `GET /profile`.
   @override
-  Future<void> setSpendingLimit(double? limit) => _local.setSpendingLimit(limit);
+  Future<void> setSpendingLimit(double? limit) async {
+    _ensureOk(await profile_api.updateSpendingLimit(limit));
+  }
 }

@@ -7,12 +7,16 @@ import '../../../widgets/app_card.dart';
 /// One salary or expense row: name, formatted value, remove button, and an
 /// optional meta line (the running balance under each expense). Shared by
 /// the salaries and expenses lists on the Deposit screen.
+///
+/// Tapping the row edits it; the close button removes it. The two gestures
+/// stay separate so a mistyped value doesn't have to be deleted and retyped.
 class MoneyListRow extends StatelessWidget {
   const MoneyListRow({
     super.key,
     required this.name,
     required this.valueLabel,
     required this.onRemove,
+    this.onEdit,
     this.meta,
   });
 
@@ -21,12 +25,17 @@ class MoneyListRow extends StatelessWidget {
   final String? meta;
   final VoidCallback onRemove;
 
+  /// Opens the edit dialog when the row is tapped. Null leaves the row inert
+  /// to taps.
+  final VoidCallback? onEdit;
+
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     return AppCard(
       color: scheme.surfaceContainerHighest,
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      onTap: onEdit,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,

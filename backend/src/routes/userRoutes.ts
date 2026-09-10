@@ -5,6 +5,7 @@ import { LoginSchema } from "../schemas/loginSchema"
 import { UpdateProfileSchema } from "../schemas/updateProfileSchema"
 import { RefreshSchema } from "../schemas/refreshSchema"
 import { ChangePasswordSchema } from "../schemas/changePasswordSchema"
+import { UpdateSpendingLimitSchema } from "../schemas/spendingLimitSchema"
 import { PasswordResetRequestSchema } from "../schemas/passwordResetRequestSchema"
 import { loginRateLimiter } from "../middleware/loginRateLimit"
 import { refreshRateLimiter } from "../middleware/refreshRateLimit"
@@ -22,6 +23,12 @@ router.post(
 )
 router.get("/profile", authMiddleware, UserController.getProfile)
 router.put("/profile", authMiddleware, validate(UpdateProfileSchema), UserController.updateProfile)
+router.put(
+  "/profile/spending-limit",
+  authMiddleware,
+  validate(UpdateSpendingLimitSchema),
+  UserController.updateSpendingLimit
+)
 router.put(
   "/profile/password",
   authMiddleware,

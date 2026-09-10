@@ -73,14 +73,51 @@ void main() {
     expect(cards.single.name, 'Nubank');
   });
 
-  test('salários seguem locais enquanto não houver endpoint', () async {
+  test('fetchSalaries e fetchExpenses decodificam as listas da API', () async {
+    api.httpClientAdapter = FakeAdapter(defaultHandler);
+
+    final salaries = await repository.fetchSalaries();
+    final expenses = await repository.fetchExpenses();
+
+    expect(salaries.single.name, 'Mateus');
+    expect(salaries.single.value, 650);
+    expect(expenses.single.name, 'Internet');
+    expect(expenses.single.value, 100);
+  });
+
+  test('addSalary devolve o salário com o id do servidor', () async {
     api.httpClientAdapter = FakeAdapter(
-      (_) => jsonBody({'success': false, 'message': 'não deveria ser chamado'}, 500),
+      (_) => jsonBody({'success': true, 'data': {'id': 's-novo'}}, 201),
     );
 
-    // Não passa pela rede: delegado ao repositório em memória.
-    final salaries = await repository.fetchSalaries();
+    final created = await repository.addSalary('Géssica', 1600);
 
-    expect(salaries, isNotEmpty);
+    // A API respondeu só com o id; nome e valor vieram do que foi enviado.
+    expect(created.id, 's-novo');
+    expect(created.name, 'Géssica');
+    expect(created.value, 1600);
+  });
+
+  test('addExpense devolve a despesa com o id do servidor', () async {
+    api.httpClientAdapter = FakeAdapter(
+      (_) => jsonBody({'success': true, 'data': {'id': 'e-novo'}}, 201),
+    );
+
+    final created = await repository.addExpense('Água', 93);
+
+    expect(created.id, 'e-novo');
+    expect(created.name, 'Água');
+    expect(created.value, 93);
+  });
+
+  test('falha ao remover despesa vira ApiException', () async {
+    api.httpClientAdapter = FakeAdapter(
+      (_) => jsonBody({'success': false, 'message': 'Despesa não encontrada.'}, 404),
+    );
+
+    expect(
+      () => repository.removeExpense('e1'),
+      throwsA(isA<ApiException>().having((e) => e.message, 'message', 'Despesa não encontrada.')),
+    );
   });
 }

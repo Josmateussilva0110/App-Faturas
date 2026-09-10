@@ -38,9 +38,6 @@ dependencies:
   # State management
   provider: ^6.1.5
 
-  # Currency/date formatting (pt_BR)
-  intl: ^0.20.2
-
   # Native share sheet for the "Compartilhar" action
   share_plus: ^11.1.0
 

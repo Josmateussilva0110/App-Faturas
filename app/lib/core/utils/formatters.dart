@@ -44,6 +44,16 @@ String formatMoney(num value) {
   return '${isNegative ? '-' : ''}R\$ $grouped,$decPart';
 }
 
+/// Reads a money amount the user typed, accepting both "1234,56" and
+/// "1234.56". Returns null when the text isn't a usable positive amount —
+/// the callers treat that as "don't submit", so it also rejects zero and
+/// negatives instead of letting the backend do it.
+double? parseMoney(String text) {
+  final value = double.tryParse(text.trim().replaceAll(',', '.'));
+  if (value == null || value <= 0) return null;
+  return value;
+}
+
 /// Deterministic hue (0-359) derived from a label, so the same person/card
 /// name always gets the same tag/avatar color. "Nós" (the user) is pinned to
 /// a fixed hue so it doesn't clash with the app's own accent color. The

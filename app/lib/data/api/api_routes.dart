@@ -19,6 +19,7 @@ class ProfileRoutes {
 
   static const String profile = '/profile';
   static const String password = '/profile/password';
+  static const String spendingLimit = '/profile/spending-limit';
 }
 
 class CardRoutes {
@@ -35,4 +36,20 @@ class PurchaseRoutes {
   static const String purchases = '/purchases';
 
   static String purchase(String id) => '/purchases/$id';
+}
+
+class SalaryRoutes {
+  const SalaryRoutes._();
+
+  static const String salaries = '/salaries';
+
+  static String salary(String id) => '/salaries/$id';
+}
+
+class ExpenseRoutes {
+  const ExpenseRoutes._();
+
+  static const String expenses = '/expenses';
+
+  static String expense(String id) => '/expenses/$id';
 }

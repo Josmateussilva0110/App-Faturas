@@ -3,13 +3,17 @@ import 'package:provider/provider.dart';
 
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_spacing.dart';
+import '../../core/toast/app_toast.dart';
 import '../../core/utils/formatters.dart';
+import '../../models/expense.dart';
+import '../../models/salary.dart';
 import '../../state/app_state.dart';
 import '../../widgets/form_section_card.dart';
 import '../../widgets/section_label.dart';
 import '../../widgets/total_card.dart';
 import 'widgets/add_money_row.dart';
 import 'widgets/deposit_export_dialog.dart';
+import 'widgets/money_entry_dialog.dart';
 import 'widgets/money_list_row.dart';
 
 /// Full-screen salary / fixed-expenses calculator: how much is left to save
@@ -41,24 +45,60 @@ class _DepositScreenState extends State<DepositScreen> {
     super.dispose();
   }
 
-  double? _parse(TextEditingController c) => double.tryParse(c.text.replaceAll(',', '.'));
-
   Future<void> _addSalary() async {
     final name = _salaryName.text.trim();
-    final value = _parse(_salaryValue);
-    if (name.isEmpty || value == null || value <= 0) return;
+    final value = parseMoney(_salaryValue.text);
+    if (name.isEmpty || value == null) {
+      // Antes o clique simplesmente não fazia nada. Agora que adicionar é
+      // uma chamada de rede, silêncio é indistinguível de falha de conexão.
+      AppToast.error('Informe um nome e um valor maior que zero.');
+      return;
+    }
+
     await context.read<AppState>().addSalary(name, value);
+    if (!mounted) return;
+
     _salaryName.clear();
     _salaryValue.clear();
   }
 
   Future<void> _addExpense() async {
     final name = _expenseName.text.trim();
-    final value = _parse(_expenseValue);
-    if (name.isEmpty || value == null || value <= 0) return;
+    final value = parseMoney(_expenseValue.text);
+    if (name.isEmpty || value == null) {
+      AppToast.error('Informe um nome e um valor maior que zero.');
+      return;
+    }
+
     await context.read<AppState>().addExpense(name, value);
+    if (!mounted) return;
+
     _expenseName.clear();
     _expenseValue.clear();
+  }
+
+  Future<void> _editSalary(Salary salary) async {
+    final entry = await showMoneyEntryDialog(
+      context,
+      title: 'Editar salário',
+      name: salary.name,
+      value: salary.value,
+    );
+    if (entry == null || !mounted) return;
+
+    await context.read<AppState>().updateSalary(salary.id, entry.name, entry.value);
+  }
+
+  Future<void> _editExpense(Expense expense) async {
+    final entry = await showMoneyEntryDialog(
+      context,
+      title: 'Editar despesa',
+      name: expense.name,
+      value: expense.value,
+    );
+    if (entry == null || !mounted) return;
+
+    await context.read<AppState>().updateExpense(expense.id, entry.name, entry.value);
   }
 
   @override
@@ -167,6 +207,7 @@ class _DepositScreenState extends State<DepositScreen> {
                   MoneyListRow(
                     name: salary.name,
                     valueLabel: formatMoney(salary.value),
+                    onEdit: () => _editSalary(salary),
                     onRemove: () => context.read<AppState>().removeSalary(salary.id),
                   ),
                   const SizedBox(height: AppSpacing.sm),
@@ -217,6 +258,7 @@ class _DepositScreenState extends State<DepositScreen> {
                     name: row.expense.name,
                     valueLabel: '- ${formatMoney(row.expense.value)}',
                     meta: 'Saldo: ${formatMoney(row.runningBalance)}',
+                    onEdit: () => _editExpense(row.expense),
                     onRemove: () => context.read<AppState>().removeExpense(row.expense.id),
                   ),
                   const SizedBox(height: AppSpacing.sm),

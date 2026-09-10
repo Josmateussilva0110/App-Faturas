@@ -58,9 +58,10 @@ class AppState extends ChangeNotifier {
   /// Loads everything the screens need. Call it once a session is active —
   /// [currentUser] comes from an authenticated endpoint.
   ///
-  /// The profile request goes in the same batch as the repository reads:
-  /// it's the only one that touches the network, so waiting for it *after*
-  /// the others would add its full round trip to every app launch.
+  /// The profile request goes in the same batch as the repository reads, and
+  /// carries [spendingLimit] with it: the goal lives on the profile row, so
+  /// fetching it apart would mean a second identical round trip on every
+  /// app launch.
   Future<void> load() async {
     try {
       final results = await Future.wait([
@@ -68,20 +69,20 @@ class AppState extends ChangeNotifier {
         _repository.fetchPurchases(),
         _repository.fetchSalaries(),
         _repository.fetchExpenses(),
-        _repository.fetchSpendingLimit(),
         _fetchCurrentUser(),
       ]);
       cards = results[0] as List<CardModel>;
       purchases = results[1] as List<Purchase>;
       salaries = results[2] as List<Salary>;
       expenses = results[3] as List<Expense>;
-      spendingLimit = results[4] as double?;
-      currentUser = results[5] as AppUser;
+      final profile = results[4] as ({AppUser user, double? spendingLimit});
+      currentUser = profile.user;
+      spendingLimit = profile.spendingLimit;
     } on ApiException catch (error) {
       // O app abre vazio em vez de travar na splash: o usuário vê o motivo
       // e pode tentar de novo sem ser jogado para a tela de login.
       AppToast.error(error.message);
-      currentUser = await _fetchCurrentUser();
+      currentUser = (await _fetchCurrentUser()).user;
     }
 
     isLoading = false;
@@ -100,26 +101,34 @@ class AppState extends ChangeNotifier {
     }
   }
 
-  /// The account behind `GET /profile`. When that call fails (offline, server
-  /// down) we fall back to what the stored session already knows, so the app
-  /// still opens instead of dying on an unset `late` field.
-  Future<AppUser> _fetchCurrentUser() async {
+  /// The account behind `GET /profile`, plus the spending goal stored on the
+  /// same row. When that call fails (offline, server down) we fall back to
+  /// what the stored session already knows, so the app still opens instead
+  /// of dying on an unset `late` field — with no goal, since the session
+  /// doesn't carry one.
+  Future<({AppUser user, double? spendingLimit})> _fetchCurrentUser() async {
     final response = await getProfile();
     final profile = response.data;
 
     if (response.success && profile != null) {
-      return AppUser(
-        id: profile.id,
-        // The backend allows a blank username; fall back to the email so the
-        // profile never shows an empty name.
-        name: profile.username.isNotEmpty ? profile.username : profile.email,
-        email: profile.email,
+      return (
+        user: AppUser(
+          id: profile.id,
+          // The backend allows a blank username; fall back to the email so
+          // the profile never shows an empty name.
+          name: profile.username.isNotEmpty ? profile.username : profile.email,
+          email: profile.email,
+        ),
+        spendingLimit: profile.spendingLimit,
       );
     }
 
     final stored = await authStorage.read();
     final email = stored?.user.email ?? '';
-    return AppUser(id: stored?.user.id ?? '', name: email, email: email);
+    return (
+      user: AppUser(id: stored?.user.id ?? '', name: email, email: email),
+      spendingLimit: null,
+    );
   }
 
   /// Drops everything tied to the account that just signed out, so the next
@@ -137,7 +146,12 @@ class AppState extends ChangeNotifier {
 
   // ── Spending goal ────────────────────────────────────────────────────
   Future<void> setSpendingLimit(double? limit) async {
-    await _repository.setSpendingLimit(limit);
+    final saved = await _guard(() async {
+      await _repository.setSpendingLimit(limit);
+      return true;
+    });
+    if (saved == null) return;
+
     spendingLimit = limit;
     notifyListeners();
   }
@@ -306,25 +320,61 @@ class AppState extends ChangeNotifier {
   double get guardar => guardarFor(0);
 
   Future<void> addSalary(String name, double value) async {
-    final created = await _repository.addSalary(name, value);
+    final created = await _guard(() => _repository.addSalary(name, value));
+    if (created == null) return;
+
     salaries = [...salaries, created];
     notifyListeners();
   }
 
+  /// Substitui o item no lugar em que ele já estava. A posição importa: a
+  /// ordem da lista é a mesma em que as despesas são descontadas do saldo.
+  Future<void> updateSalary(String id, String name, double value) async {
+    final updated = await _guard(() => _repository.updateSalary(id, name, value));
+    if (updated == null) return;
+
+    salaries = [
+      for (final salary in salaries) salary.id == id ? updated : salary,
+    ];
+    notifyListeners();
+  }
+
   Future<void> removeSalary(String id) async {
-    await _repository.removeSalary(id);
+    final removed = await _guard(() async {
+      await _repository.removeSalary(id);
+      return true;
+    });
+    if (removed == null) return;
+
     salaries = salaries.where((s) => s.id != id).toList();
     notifyListeners();
   }
 
   Future<void> addExpense(String name, double value) async {
-    final created = await _repository.addExpense(name, value);
+    final created = await _guard(() => _repository.addExpense(name, value));
+    if (created == null) return;
+
     expenses = [...expenses, created];
     notifyListeners();
   }
 
+  Future<void> updateExpense(String id, String name, double value) async {
+    final updated = await _guard(() => _repository.updateExpense(id, name, value));
+    if (updated == null) return;
+
+    expenses = [
+      for (final expense in expenses) expense.id == id ? updated : expense,
+    ];
+    notifyListeners();
+  }
+
   Future<void> removeExpense(String id) async {
-    await _repository.removeExpense(id);
+    final removed = await _guard(() async {
+      await _repository.removeExpense(id);
+      return true;
+    });
+    if (removed == null) return;
+
     expenses = expenses.where((e) => e.id != id).toList();
     notifyListeners();
   }
