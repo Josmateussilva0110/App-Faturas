@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
 import 'core/settings/secure_settings_storage.dart';
 import 'core/settings/settings_storage.dart';
 import 'core/theme/app_theme.dart';
+import 'core/theme/system_bars.dart';
 import 'core/toast/app_toast.dart';
 import 'data/api/auth_storage.dart';
 import 'data/api/secure_auth_storage.dart';
@@ -17,6 +19,12 @@ Future<void> main() async {
   // in-memory implementation.
   authStorage = SecureAuthStorage();
   settingsStorage = SecureSettingsStorage();
+
+  // O Android 15+ já força isto; declarar aqui faz as versões anteriores se
+  // comportarem igual, em vez de a barra de navegação mudar de aparência
+  // conforme o aparelho. Quem cuida de não ficar conteúdo embaixo das barras
+  // é o SafeArea das telas — ver SystemBarsStyle.
+  await SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
 
   // Lido antes do runApp de propósito: com a leitura depois, o app abriria no
   // padrão e piscaria para o tema escolhido no primeiro frame.
@@ -49,6 +57,7 @@ class FaturaApp extends StatelessWidget {
             theme: AppTheme.light(),
             darkTheme: AppTheme.dark(),
             themeMode: themeMode,
+            builder: (context, child) => SystemBarsStyle(child: child ?? const SizedBox.shrink()),
             home: const SessionGate(),
           );
         },

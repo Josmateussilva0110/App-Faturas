@@ -59,70 +59,72 @@ class MonthlyScreen extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(title: const Text('Meses')),
-      body: RefreshIndicator(
-        onRefresh: () => context.read<AppState>().load(),
-        child: ListView(
-          // Sem isto, uma lista curta não rola e o gesto de puxar nunca
-          // dispara — justo no caso que mais precisa dele, o de a carga
-          // inicial ter falhado e a tela estar vazia.
-          physics: const AlwaysScrollableScrollPhysics(),
-          padding: const EdgeInsets.all(AppSpacing.lg),
-          children: [
-            // O seletor desceu da AppBar para o corpo: é o mesmo widget que
-            // Pessoas e Depositar usam, e as três telas passam a navegar entre
-            // meses do mesmo jeito.
-            MonthSelector(
-              offset: appState.monthOffset,
-              currentAbs: appState.currentAbs,
-              onChanged: (value) => context.read<AppState>().setMonthOffset(value),
-            ),
-            const SizedBox(height: AppSpacing.lg),
-            TotalCard(
-              kicker: 'Total do mês',
-              value: formatMoney(appState.monthlyTotal),
-              meta: entries.length == 1 ? '1 parcela' : '${entries.length} parcelas',
-              icon: Icons.trending_up,
-            ),
-            if (checks.isNotEmpty) ...[
-              const SizedBox(height: AppSpacing.lg),
-              SectionLabel(
-                'Conferência da fatura',
-                icon: Icons.fact_check_outlined,
-                iconColor: context.palette.iconTint(AppColors.hueCards),
+      body: SafeArea(
+        child: RefreshIndicator(
+          onRefresh: () => context.read<AppState>().load(),
+          child: ListView(
+            // Sem isto, uma lista curta não rola e o gesto de puxar nunca
+            // dispara — justo no caso que mais precisa dele, o de a carga
+            // inicial ter falhado e a tela estar vazia.
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: const EdgeInsets.all(AppSpacing.lg),
+            children: [
+              // O seletor desceu da AppBar para o corpo: é o mesmo widget que
+              // Pessoas e Depositar usam, e as três telas passam a navegar entre
+              // meses do mesmo jeito.
+              MonthSelector(
+                offset: appState.monthOffset,
+                currentAbs: appState.currentAbs,
+                onChanged: (value) => context.read<AppState>().setMonthOffset(value),
               ),
-              const SizedBox(height: AppSpacing.sm),
-              for (final check in checks) ...[
-                StatementCard(check: check, onTap: () => _editStatement(context, check)),
-                const SizedBox(height: AppSpacing.sm),
-              ],
-            ],
-            const SizedBox(height: AppSpacing.lg),
-            SectionLabel(
-              'Parcelas do mês',
-              icon: Icons.receipt_long_outlined,
-              iconColor: Theme.of(context).colorScheme.primary,
-            ),
-            const SizedBox(height: AppSpacing.sm),
-            if (appState.loadError != null)
-              EmptyState.error(
-                message: appState.loadError!,
-                onRetry: () => context.read<AppState>().load(),
-              )
-            else if (entries.isEmpty)
-              const EmptyState(message: 'Nenhuma parcela neste mês.')
-            else
-              for (final entry in entries) ...[
-                PurchaseTile(
-                  purchase: entry.purchase,
-                  status: entry.status,
-                  cardName: appState.cardName(entry.purchase.cardId),
-                  cardHue: appState.cardHue(entry.purchase.cardId),
-                  alwaysShowPersonTag: true,
-                  onTap: () => showEditPurchaseDialog(context, entry.purchase),
+              const SizedBox(height: AppSpacing.lg),
+              TotalCard(
+                kicker: 'Total do mês',
+                value: formatMoney(appState.monthlyTotal),
+                meta: entries.length == 1 ? '1 parcela' : '${entries.length} parcelas',
+                icon: Icons.trending_up,
+              ),
+              if (checks.isNotEmpty) ...[
+                const SizedBox(height: AppSpacing.lg),
+                SectionLabel(
+                  'Conferência da fatura',
+                  icon: Icons.fact_check_outlined,
+                  iconColor: context.palette.iconTint(AppColors.hueCards),
                 ),
                 const SizedBox(height: AppSpacing.sm),
+                for (final check in checks) ...[
+                  StatementCard(check: check, onTap: () => _editStatement(context, check)),
+                  const SizedBox(height: AppSpacing.sm),
+                ],
               ],
-          ],
+              const SizedBox(height: AppSpacing.lg),
+              SectionLabel(
+                'Parcelas do mês',
+                icon: Icons.receipt_long_outlined,
+                iconColor: Theme.of(context).colorScheme.primary,
+              ),
+              const SizedBox(height: AppSpacing.sm),
+              if (appState.loadError != null)
+                EmptyState.error(
+                  message: appState.loadError!,
+                  onRetry: () => context.read<AppState>().load(),
+                )
+              else if (entries.isEmpty)
+                const EmptyState(message: 'Nenhuma parcela neste mês.')
+              else
+                for (final entry in entries) ...[
+                  PurchaseTile(
+                    purchase: entry.purchase,
+                    status: entry.status,
+                    cardName: appState.cardName(entry.purchase.cardId),
+                    cardHue: appState.cardHue(entry.purchase.cardId),
+                    alwaysShowPersonTag: true,
+                    onTap: () => showEditPurchaseDialog(context, entry.purchase),
+                  ),
+                  const SizedBox(height: AppSpacing.sm),
+                ],
+            ],
+          ),
         ),
       ),
     );

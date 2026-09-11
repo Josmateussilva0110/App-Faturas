@@ -164,122 +164,124 @@ class _DepositScreenState extends State<DepositScreen> {
           ),
         ],
       ),
-      body: RefreshIndicator(
-        onRefresh: () => context.read<AppState>().load(),
-        child: ListView(
-          // Sem isto, uma lista curta não rola e o gesto de puxar nunca
-          // dispara — justo no caso que mais precisa dele, o de a carga
-          // inicial ter falhado e a tela estar vazia.
-          physics: const AlwaysScrollableScrollPhysics(),
-          padding: const EdgeInsets.all(AppSpacing.lg),
-          children: [
-            MonthSelector(
-              offset: _monthOffset,
-              currentAbs: appState.currentAbs,
-              onChanged: (value) => setState(() => _monthOffset = value),
-            ),
-            const SizedBox(height: AppSpacing.lg),
-            FormSectionCard(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  SectionLabel('Salários', icon: Icons.payments_outlined, iconColor: salaryColor),
-                  const SizedBox(height: AppSpacing.md),
-                  if (appState.salaries.isEmpty)
-                    const EmptyState(
-                      message: 'Nenhum salário lançado.',
-                      icon: Icons.payments_outlined,
+      body: SafeArea(
+        child: RefreshIndicator(
+          onRefresh: () => context.read<AppState>().load(),
+          child: ListView(
+            // Sem isto, uma lista curta não rola e o gesto de puxar nunca
+            // dispara — justo no caso que mais precisa dele, o de a carga
+            // inicial ter falhado e a tela estar vazia.
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: const EdgeInsets.all(AppSpacing.lg),
+            children: [
+              MonthSelector(
+                offset: _monthOffset,
+                currentAbs: appState.currentAbs,
+                onChanged: (value) => setState(() => _monthOffset = value),
+              ),
+              const SizedBox(height: AppSpacing.lg),
+              FormSectionCard(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    SectionLabel('Salários', icon: Icons.payments_outlined, iconColor: salaryColor),
+                    const SizedBox(height: AppSpacing.md),
+                    if (appState.salaries.isEmpty)
+                      const EmptyState(
+                        message: 'Nenhum salário lançado.',
+                        icon: Icons.payments_outlined,
+                      ),
+                    for (final salary in appState.salaries) ...[
+                      MoneyListRow(
+                        name: salary.name,
+                        valueLabel: formatMoney(salary.value),
+                        onEdit: () => _editSalary(salary),
+                        onRemove: () => _removeSalary(salary),
+                      ),
+                      const SizedBox(height: AppSpacing.sm),
+                    ],
+                    AddMoneyRow(
+                      nameController: _salaryName,
+                      valueController: _salaryValue,
+                      onAdd: _addSalary,
+                      accentColor: salaryColor,
                     ),
-                  for (final salary in appState.salaries) ...[
-                    MoneyListRow(
-                      name: salary.name,
-                      valueLabel: formatMoney(salary.value),
-                      onEdit: () => _editSalary(salary),
-                      onRemove: () => _removeSalary(salary),
-                    ),
-                    const SizedBox(height: AppSpacing.sm),
                   ],
-                  AddMoneyRow(
-                    nameController: _salaryName,
-                    valueController: _salaryValue,
-                    onAdd: _addSalary,
-                    accentColor: salaryColor,
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: AppSpacing.lg),
-            FormSectionCard(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  SectionLabel('Resumo', icon: Icons.calculate_outlined, iconColor: scheme.primary),
-                  const SizedBox(height: AppSpacing.md),
-                  _SummaryRow(label: 'Total salários', value: formatMoney(appState.totalSalaries), color: salaryColor),
-                  _SummaryRow(
-                    label: 'Meu crédito no cartão',
-                    value: '- ${formatMoney(ownTotal)}',
-                    color: scheme.error,
-                  ),
-                  const Divider(height: AppSpacing.lg),
-                  _SummaryRow(
-                    label: 'Saldo após crédito',
-                    value: formatMoney(afterCredit),
-                    color: scheme.primary,
-                    emphasized: true,
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: AppSpacing.lg),
-            FormSectionCard(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  SectionLabel('Despesas', icon: Icons.trending_down, iconColor: expenseColor),
-                  const SizedBox(height: AppSpacing.md),
-                  if (expenseRows.isEmpty)
-                    const EmptyState(
-                      message: 'Nenhuma despesa fixa lançada.',
-                      icon: Icons.trending_down,
-                    ),
-                  for (final row in expenseRows) ...[
-                    MoneyListRow(
-                      name: row.expense.name,
-                      valueLabel: '- ${formatMoney(row.expense.value)}',
-                      meta: 'Saldo: ${formatMoney(row.runningBalance)}',
-                      onEdit: () => _editExpense(row.expense),
-                      onRemove: () => _removeExpense(row.expense),
-                    ),
-                    const SizedBox(height: AppSpacing.sm),
-                  ],
-                  AddMoneyRow(
-                    nameController: _expenseName,
-                    valueController: _expenseValue,
-                    onAdd: _addExpense,
-                    accentColor: expenseColor,
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: AppSpacing.xl),
-            Center(
-              child: FractionallySizedBox(
-                widthFactor: 0.6,
-                child: TotalCard(
-                  kicker: 'Guardar',
-                  value: formatMoney(guardar),
-                  meta: monthLabel,
-                  icon: Icons.savings_outlined,
-                  valueFontSize: 22,
-                  centered: true,
                 ),
               ),
-            ),
-          ],
+              const SizedBox(height: AppSpacing.lg),
+              FormSectionCard(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    SectionLabel('Resumo', icon: Icons.calculate_outlined, iconColor: scheme.primary),
+                    const SizedBox(height: AppSpacing.md),
+                    _SummaryRow(label: 'Total salários', value: formatMoney(appState.totalSalaries), color: salaryColor),
+                    _SummaryRow(
+                      label: 'Meu crédito no cartão',
+                      value: '- ${formatMoney(ownTotal)}',
+                      color: scheme.error,
+                    ),
+                    const Divider(height: AppSpacing.lg),
+                    _SummaryRow(
+                      label: 'Saldo após crédito',
+                      value: formatMoney(afterCredit),
+                      color: scheme.primary,
+                      emphasized: true,
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: AppSpacing.lg),
+              FormSectionCard(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    SectionLabel('Despesas', icon: Icons.trending_down, iconColor: expenseColor),
+                    const SizedBox(height: AppSpacing.md),
+                    if (expenseRows.isEmpty)
+                      const EmptyState(
+                        message: 'Nenhuma despesa fixa lançada.',
+                        icon: Icons.trending_down,
+                      ),
+                    for (final row in expenseRows) ...[
+                      MoneyListRow(
+                        name: row.expense.name,
+                        valueLabel: '- ${formatMoney(row.expense.value)}',
+                        meta: 'Saldo: ${formatMoney(row.runningBalance)}',
+                        onEdit: () => _editExpense(row.expense),
+                        onRemove: () => _removeExpense(row.expense),
+                      ),
+                      const SizedBox(height: AppSpacing.sm),
+                    ],
+                    AddMoneyRow(
+                      nameController: _expenseName,
+                      valueController: _expenseValue,
+                      onAdd: _addExpense,
+                      accentColor: expenseColor,
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: AppSpacing.xl),
+              Center(
+                child: FractionallySizedBox(
+                  widthFactor: 0.6,
+                  child: TotalCard(
+                    kicker: 'Guardar',
+                    value: formatMoney(guardar),
+                    meta: monthLabel,
+                    icon: Icons.savings_outlined,
+                    valueFontSize: 22,
+                    centered: true,
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -309,9 +311,14 @@ class _SummaryRow extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label, style: TextStyle(fontSize: emphasized ? 14 : 13, color: color)),
+          // O rótulo cede espaço; o valor nunca, porque dinheiro cortado pela
+          // metade engana. Sem isto os dois pedem a largura natural e a linha
+          // estoura numa tela estreita com a fonte do sistema aumentada.
+          Expanded(
+            child: Text(label, style: TextStyle(fontSize: emphasized ? 14 : 13, color: color)),
+          ),
+          const SizedBox(width: AppSpacing.md),
           Text(value, style: style),
         ],
       ),

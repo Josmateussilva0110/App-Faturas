@@ -52,79 +52,81 @@ class _ProfileScreenState extends State<ProfileScreen> {
         title: const Text('Perfil'),
         backgroundColor: scheme.surfaceContainerLow,
       ),
-      body: ListView(
-        padding: const EdgeInsets.all(AppSpacing.lg),
-        children: [
-          FormSectionCard(
-            child: Row(
-              children: [
-                AvatarCircle(label: appState.currentUser.name, size: 56),
-                const SizedBox(width: AppSpacing.mdPlus),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      appState.currentUser.name,
-                      style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16),
-                    ),
-                    // When the account has no username the name already *is*
-                    // the email — no point printing it twice.
-                    if (appState.currentUser.name != appState.currentUser.email)
-                      Text(appState.currentUser.email, style: const TextStyle(fontSize: 13)),
-                  ],
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: AppSpacing.lg),
-          FormSectionCard(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                SectionLabel('Aparência', icon: Icons.palette_outlined, iconColor: scheme.primary),
-                const SizedBox(height: AppSpacing.md),
-                SegmentedChoice<ThemeMode>(
-                  value: appState.themeMode,
-                  options: const [
-                    (ThemeMode.system, 'Sistema'),
-                    (ThemeMode.light, 'Claro'),
-                    (ThemeMode.dark, 'Escuro'),
-                  ],
-                  icons: const [
-                    Icons.brightness_auto_outlined,
-                    Icons.light_mode_outlined,
-                    Icons.dark_mode_outlined,
-                  ],
-                  onChanged: (mode) => context.read<AppState>().setThemeMode(mode),
-                  expand: true,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  fontSize: 15,
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: AppSpacing.xl),
-          SizedBox(
-            width: double.infinity,
-            child: OutlinedButton.icon(
-              onPressed: _signingOut ? null : _signOut,
-              style: OutlinedButton.styleFrom(
-                foregroundColor: scheme.error,
-                alignment: Alignment.centerLeft,
+      body: SafeArea(
+        child: ListView(
+          padding: const EdgeInsets.all(AppSpacing.lg),
+          children: [
+            FormSectionCard(
+              child: Row(
+                children: [
+                  AvatarCircle(label: appState.currentUser.name, size: 56),
+                  const SizedBox(width: AppSpacing.mdPlus),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        appState.currentUser.name,
+                        style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16),
+                      ),
+                      // When the account has no username the name already *is*
+                      // the email — no point printing it twice.
+                      if (appState.currentUser.name != appState.currentUser.email)
+                        Text(appState.currentUser.email, style: const TextStyle(fontSize: 13)),
+                    ],
+                  ),
+                ],
               ),
-              icon: _signingOut
-                  ? const SizedBox(
-                      width: 18,
-                      height: 18,
-                      child: CircularProgressIndicator(strokeWidth: 2.5),
-                    )
-                  : const Icon(Icons.logout),
-              label: Text(_signingOut ? 'Saindo...' : 'Sair da conta'),
             ),
-          ),
-        ],
+            const SizedBox(height: AppSpacing.lg),
+            FormSectionCard(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  SectionLabel('Aparência', icon: Icons.palette_outlined, iconColor: scheme.primary),
+                  const SizedBox(height: AppSpacing.md),
+                  SegmentedChoice<ThemeMode>(
+                    value: appState.themeMode,
+                    options: const [
+                      (ThemeMode.system, 'Sistema'),
+                      (ThemeMode.light, 'Claro'),
+                      (ThemeMode.dark, 'Escuro'),
+                    ],
+                    icons: const [
+                      Icons.brightness_auto_outlined,
+                      Icons.light_mode_outlined,
+                      Icons.dark_mode_outlined,
+                    ],
+                    onChanged: (mode) => context.read<AppState>().setThemeMode(mode),
+                    expand: true,
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    fontSize: 15,
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: AppSpacing.xl),
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                onPressed: _signingOut ? null : _signOut,
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: scheme.error,
+                  alignment: Alignment.centerLeft,
+                ),
+                icon: _signingOut
+                    ? const SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(strokeWidth: 2.5),
+                      )
+                    : const Icon(Icons.logout),
+                label: Text(_signingOut ? 'Saindo...' : 'Sair da conta'),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

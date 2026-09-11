@@ -37,60 +37,62 @@ class CardsScreen extends StatelessWidget {
         tooltip: 'Novo cartão',
         child: const Icon(Icons.add),
       ),
-      body: RefreshIndicator(
-        onRefresh: () => context.read<AppState>().load(),
-        child: ListView(
-          // Sem isto, uma lista curta não rola e o gesto de puxar nunca
-          // dispara — justo no caso que mais precisa dele, o de a carga
-          // inicial ter falhado e a tela estar vazia.
-          physics: const AlwaysScrollableScrollPhysics(),
-          padding: const EdgeInsets.all(AppSpacing.lg),
-          children: [
-            SectionLabel(
-              'Meus cartões',
-              icon: Icons.credit_card_outlined,
-              iconColor: context.palette.iconTint(AppColors.hueCards),
-            ),
-            const SizedBox(height: AppSpacing.sm),
-            if (appState.loadError != null)
-              EmptyState.error(
-                message: appState.loadError!,
-                onRetry: () => context.read<AppState>().load(),
-              )
-            else if (appState.cards.isEmpty)
-              const EmptyState(
-                message: 'Nenhum cartão cadastrado.',
+      body: SafeArea(
+        child: RefreshIndicator(
+          onRefresh: () => context.read<AppState>().load(),
+          child: ListView(
+            // Sem isto, uma lista curta não rola e o gesto de puxar nunca
+            // dispara — justo no caso que mais precisa dele, o de a carga
+            // inicial ter falhado e a tela estar vazia.
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: const EdgeInsets.all(AppSpacing.lg),
+            children: [
+              SectionLabel(
+                'Meus cartões',
                 icon: Icons.credit_card_outlined,
-              )
-            else
-              for (final card in appState.cards) ...[
-                CardRow(
-                  name: card.name,
-                  hue: card.resolvedHue,
-                  onEdit: () async {
-                    final draft = await showCardDialog(context, existing: card);
-                    if (draft == null || !context.mounted) return;
+                iconColor: context.palette.iconTint(AppColors.hueCards),
+              ),
+              const SizedBox(height: AppSpacing.sm),
+              if (appState.loadError != null)
+                EmptyState.error(
+                  message: appState.loadError!,
+                  onRetry: () => context.read<AppState>().load(),
+                )
+              else if (appState.cards.isEmpty)
+                const EmptyState(
+                  message: 'Nenhum cartão cadastrado.',
+                  icon: Icons.credit_card_outlined,
+                )
+              else
+                for (final card in appState.cards) ...[
+                  CardRow(
+                    name: card.name,
+                    hue: card.resolvedHue,
+                    onEdit: () async {
+                      final draft = await showCardDialog(context, existing: card);
+                      if (draft == null || !context.mounted) return;
 
-                    final saved = await context
-                        .read<AppState>()
-                        .updateCard(card.id, draft.name, draft.hue);
-                    if (saved) AppToast.success('Cartão atualizado.');
-                  },
-                  onDelete: () async {
-                    final hasPurchases = appState.purchases.any((p) => p.cardId == card.id);
-                    final deleted = await context.read<AppState>().deleteCard(card.id);
-                    if (!deleted) return;
+                      final saved = await context
+                          .read<AppState>()
+                          .updateCard(card.id, draft.name, draft.hue);
+                      if (saved) AppToast.success('Cartão atualizado.');
+                    },
+                    onDelete: () async {
+                      final hasPurchases = appState.purchases.any((p) => p.cardId == card.id);
+                      final deleted = await context.read<AppState>().deleteCard(card.id);
+                      if (!deleted) return;
 
-                    if (hasPurchases) {
-                      AppToast.warning('Cartão excluído — algumas compras ficaram sem cartão vinculado.');
-                    } else {
-                      AppToast.success('Cartão excluído.');
-                    }
-                  },
-                ),
-                const SizedBox(height: AppSpacing.sm),
-              ],
-          ],
+                      if (hasPurchases) {
+                        AppToast.warning('Cartão excluído — algumas compras ficaram sem cartão vinculado.');
+                      } else {
+                        AppToast.success('Cartão excluído.');
+                      }
+                    },
+                  ),
+                  const SizedBox(height: AppSpacing.sm),
+                ],
+            ],
+          ),
         ),
       ),
     );

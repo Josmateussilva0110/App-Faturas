@@ -22,29 +22,31 @@ class AddPurchaseScreen extends StatelessWidget {
         title: const Text('Nova compra'),
         backgroundColor: Theme.of(context).colorScheme.surfaceContainerLow,
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(AppSpacing.lg),
-        child: PurchaseFormFields(
-          cards: appState.cards,
-          submitLabel: 'Salvar compra',
-          onSubmit: (values) async {
-            try {
-              await context.read<AppState>().addPurchase(Purchase(
-                    id: '',
-                    name: values.name,
-                    amount: values.amount,
-                    installments: values.installments,
-                    isOther: values.isOther,
-                    person: values.person,
-                    cardId: values.cardId,
-                    startAbs: currentAbsoluteMonth() + values.startOffset,
-                  ));
-              if (context.mounted) Navigator.of(context).pop();
-              AppToast.success('Compra "${values.name}" adicionada.');
-            } catch (_) {
-              AppToast.error('Não foi possível salvar a compra.');
-            }
-          },
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(AppSpacing.lg),
+          child: PurchaseFormFields(
+            cards: appState.cards,
+            submitLabel: 'Salvar compra',
+            onSubmit: (values) async {
+              try {
+                await context.read<AppState>().addPurchase(Purchase(
+                      id: '',
+                      name: values.name,
+                      amount: values.amount,
+                      installments: values.installments,
+                      isOther: values.isOther,
+                      person: values.person,
+                      cardId: values.cardId,
+                      startAbs: currentAbsoluteMonth() + values.startOffset,
+                    ));
+                if (context.mounted) Navigator.of(context).pop();
+                AppToast.success('Compra "${values.name}" adicionada.');
+              } catch (_) {
+                AppToast.error('Não foi possível salvar a compra.');
+              }
+            },
+          ),
         ),
       ),
     );
