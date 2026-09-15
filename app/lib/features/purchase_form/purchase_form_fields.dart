@@ -116,7 +116,7 @@ class _PurchaseFormFieldsState extends State<PurchaseFormFields> {
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
             children: [
-              const SectionLabel('Quem comprou', uppercase: false),
+              const SectionLabel('Quem comprou'),
               const SizedBox(height: AppSpacing.sm),
               SegmentedChoice<bool>(
                 value: _isOther,
@@ -150,7 +150,6 @@ class _PurchaseFormFieldsState extends State<PurchaseFormFields> {
                 'Detalhes da compra',
                 icon: Icons.local_offer_outlined,
                 iconColor: scheme.primary,
-                uppercase: false,
               ),
               const SizedBox(height: AppSpacing.sm),
               AppTextField(
@@ -205,7 +204,7 @@ class _PurchaseFormFieldsState extends State<PurchaseFormFields> {
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
             children: [
-              const SectionLabel('Quando começa', uppercase: false),
+              const SectionLabel('Quando começa'),
               const SizedBox(height: AppSpacing.sm),
               Container(
                 height: 48,
@@ -264,7 +263,6 @@ class _PurchaseFormFieldsState extends State<PurchaseFormFields> {
                 'Pagamento',
                 icon: Icons.credit_card_outlined,
                 iconColor: palette.iconTint(AppColors.hueCards),
-                uppercase: false,
               ),
               const SizedBox(height: AppSpacing.sm),
               CardChoiceChips(

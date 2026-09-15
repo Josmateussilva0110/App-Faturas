@@ -12,6 +12,7 @@ import '../../state/app_state.dart';
 import '../../widgets/confirm_delete_dialog.dart';
 import '../../widgets/empty_state.dart';
 import '../../widgets/form_section_card.dart';
+import '../../widgets/labeled_amount.dart';
 import '../../widgets/month_selector.dart';
 import '../../widgets/money_entry_dialog.dart';
 import '../../widgets/section_label.dart';
@@ -186,21 +187,26 @@ class _DepositScreenState extends State<DepositScreen> {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     SectionLabel('Salários', icon: Icons.payments_outlined, iconColor: salaryColor),
-                    const SizedBox(height: AppSpacing.md),
+                    const SizedBox(height: AppSpacing.sm),
                     if (appState.salaries.isEmpty)
                       const EmptyState(
                         message: 'Nenhum salário lançado.',
                         icon: Icons.payments_outlined,
-                      ),
-                    for (final salary in appState.salaries) ...[
-                      MoneyListRow(
-                        name: salary.name,
-                        valueLabel: formatMoney(salary.value),
-                        onEdit: () => _editSalary(salary),
-                        onRemove: () => _removeSalary(salary),
-                      ),
-                      const SizedBox(height: AppSpacing.sm),
-                    ],
+                      )
+                    else
+                      // Divisor entre as linhas, não espaço: sem o fundo
+                      // cinza que elas tinham, é a régua que diz onde uma
+                      // acaba e a outra começa.
+                      for (var i = 0; i < appState.salaries.length; i++) ...[
+                        if (i > 0) const Divider(height: 1),
+                        MoneyListRow(
+                          name: appState.salaries[i].name,
+                          valueLabel: formatMoney(appState.salaries[i].value),
+                          onEdit: () => _editSalary(appState.salaries[i]),
+                          onRemove: () => _removeSalary(appState.salaries[i]),
+                        ),
+                      ],
+                    const SizedBox(height: AppSpacing.md),
                     AddMoneyRow(
                       nameController: _salaryName,
                       valueController: _salaryValue,
@@ -217,18 +223,28 @@ class _DepositScreenState extends State<DepositScreen> {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     SectionLabel('Resumo', icon: Icons.calculate_outlined, iconColor: scheme.primary),
+                    const SizedBox(height: AppSpacing.lg),
+                    // Empilhado, e não rótulo à esquerda com valor à direita:
+                    // é o mesmo bloco do card de conferência da tela Meses,
+                    // então as duas telas apresentam número do mesmo jeito.
+                    LabeledAmount(
+                      label: 'Total de salários',
+                      value: formatMoney(appState.totalSalaries),
+                      color: salaryColor,
+                    ),
                     const SizedBox(height: AppSpacing.md),
-                    _SummaryRow(label: 'Total salários', value: formatMoney(appState.totalSalaries), color: salaryColor),
-                    _SummaryRow(
-                      label: 'Meu crédito no cartão',
+                    LabeledAmount(
+                      label: 'Crédito no cartão',
                       value: '- ${formatMoney(ownTotal)}',
                       color: scheme.error,
                     ),
-                    const Divider(height: AppSpacing.lg),
-                    _SummaryRow(
-                      label: 'Saldo após crédito',
+                    const Divider(height: AppSpacing.xl),
+                    LabeledAmount(
+                      label: 'Saldo após o cartão',
                       value: formatMoney(afterCredit),
-                      color: scheme.primary,
+                      // Verde quando sobra, vermelho quando falta: a cor diz
+                      // o sinal do número, que é o que se quer saber aqui.
+                      color: afterCredit < 0 ? scheme.error : salaryColor,
                       emphasized: true,
                     ),
                   ],
@@ -241,22 +257,24 @@ class _DepositScreenState extends State<DepositScreen> {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     SectionLabel('Despesas', icon: Icons.trending_down, iconColor: expenseColor),
-                    const SizedBox(height: AppSpacing.md),
+                    const SizedBox(height: AppSpacing.sm),
                     if (expenseRows.isEmpty)
                       const EmptyState(
                         message: 'Nenhuma despesa fixa lançada.',
                         icon: Icons.trending_down,
-                      ),
-                    for (final row in expenseRows) ...[
-                      MoneyListRow(
-                        name: row.expense.name,
-                        valueLabel: '- ${formatMoney(row.expense.value)}',
-                        meta: 'Saldo: ${formatMoney(row.runningBalance)}',
-                        onEdit: () => _editExpense(row.expense),
-                        onRemove: () => _removeExpense(row.expense),
-                      ),
-                      const SizedBox(height: AppSpacing.sm),
-                    ],
+                      )
+                    else
+                      for (var i = 0; i < expenseRows.length; i++) ...[
+                        if (i > 0) const Divider(height: 1),
+                        MoneyListRow(
+                          name: expenseRows[i].expense.name,
+                          valueLabel: '- ${formatMoney(expenseRows[i].expense.value)}',
+                          meta: 'Saldo restante: ${formatMoney(expenseRows[i].runningBalance)}',
+                          onEdit: () => _editExpense(expenseRows[i].expense),
+                          onRemove: () => _removeExpense(expenseRows[i].expense),
+                        ),
+                      ],
+                    const SizedBox(height: AppSpacing.md),
                     AddMoneyRow(
                       nameController: _expenseName,
                       valueController: _expenseValue,
@@ -283,44 +301,6 @@ class _DepositScreenState extends State<DepositScreen> {
             ],
           ),
         ),
-      ),
-    );
-  }
-}
-
-class _SummaryRow extends StatelessWidget {
-  const _SummaryRow({
-    required this.label,
-    required this.value,
-    this.color,
-    this.emphasized = false,
-  });
-
-  final String label;
-  final String value;
-  final Color? color;
-  final bool emphasized;
-
-  @override
-  Widget build(BuildContext context) {
-    final style = TextStyle(
-      fontSize: emphasized ? 15 : 13,
-      fontWeight: emphasized ? FontWeight.w800 : FontWeight.w700,
-      color: color,
-    );
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      child: Row(
-        children: [
-          // O rótulo cede espaço; o valor nunca, porque dinheiro cortado pela
-          // metade engana. Sem isto os dois pedem a largura natural e a linha
-          // estoura numa tela estreita com a fonte do sistema aumentada.
-          Expanded(
-            child: Text(label, style: TextStyle(fontSize: emphasized ? 14 : 13, color: color)),
-          ),
-          const SizedBox(width: AppSpacing.md),
-          Text(value, style: style),
-        ],
       ),
     );
   }

@@ -25,17 +25,22 @@ class PersonRow extends StatelessWidget {
   Widget build(BuildContext context) {
     return AppCard(
       accentColor: context.palette.avatarBackground(hueForLabel(label)),
+      padding: const EdgeInsets.all(AppSpacing.lg),
       child: Row(
         children: [
           AvatarCircle(label: label),
-          const SizedBox(width: AppSpacing.smPlus),
+          const SizedBox(width: AppSpacing.md),
           Expanded(
-            child: Text(label, style: context.text.title),
+            child: Text(label, style: context.text.title, overflow: TextOverflow.ellipsis),
           ),
-          Text(formatMoney(total), style: context.text.title),
+          const SizedBox(width: AppSpacing.sm),
+          // `money` e não `title`: nome e valor tinham o mesmo peso, e a
+          // lista vem ordenada por valor — é ele que explica a ordem.
+          Text(formatMoney(total), style: context.text.money),
           IconButton(
             onPressed: onShare,
             icon: const Icon(Icons.share_outlined, size: 18),
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
             tooltip: 'Compartilhar',
           ),
         ],

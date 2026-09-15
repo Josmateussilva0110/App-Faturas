@@ -3,34 +3,31 @@ import 'package:flutter/material.dart';
 import '../core/theme/app_spacing.dart';
 import '../core/theme/app_typography.dart';
 
-/// Small section heading, uppercase by default (e.g. "COMPRAS ATIVAS").
-/// Pass [uppercase]: false for contexts that want sentence case instead
-/// (e.g. "Quem comprou"). The text always stays a muted gray; pass
-/// [iconColor] to tint just the icon (e.g. `AppColors.iconTint(...)`) so
-/// sections read as color-coded without the label itself shouting.
+/// Small section heading, em capitalização normal ("Conferência da fatura").
+///
+/// Já foi caixa alta por padrão. O redesign tirou: com sete telas empilhando
+/// títulos gritados, a caixa alta deixava de destacar e virava ruído — e ela
+/// lê mais devagar que a frase normal. O texto sempre fica num cinza apagado;
+/// passe [iconColor] para tingir só o ícone, e a seção lê como codificada por
+/// cor sem o rótulo brigar por atenção.
 class SectionLabel extends StatelessWidget {
-  const SectionLabel(this.text, {super.key, this.icon, this.uppercase = true, this.iconColor});
+  const SectionLabel(this.text, {super.key, this.icon, this.iconColor});
 
   final String text;
   final IconData? icon;
-  final bool uppercase;
   final Color? iconColor;
 
   @override
   Widget build(BuildContext context) {
     final textColor = Theme.of(context).colorScheme.onSurfaceVariant;
-    final style = context.text.label.copyWith(
-      letterSpacing: uppercase ? 0.05 : 0,
-      color: textColor,
-    );
-    final label = uppercase ? text.toUpperCase() : text;
-    if (icon == null) return Text(label, style: style);
+    final style = context.text.label.copyWith(color: textColor);
+    if (icon == null) return Text(text, style: style);
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Icon(icon, size: 14, color: iconColor ?? textColor),
+        Icon(icon, size: 15, color: iconColor ?? textColor),
         const SizedBox(width: AppSpacing.xsPlus),
-        Text(label, style: style),
+        Text(text, style: style),
       ],
     );
   }

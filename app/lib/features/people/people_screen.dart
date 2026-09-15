@@ -57,13 +57,13 @@ class _PeopleScreenState extends State<PeopleScreen> {
                 meta: people.length == 1 ? '1 pessoa' : '${people.length} pessoas',
                 icon: Icons.groups_outlined,
               ),
-              const SizedBox(height: AppSpacing.lg),
+              const SizedBox(height: AppSpacing.xl),
               SectionLabel(
                 'Gastos por pessoa',
                 icon: Icons.people_outline,
                 iconColor: context.palette.iconTint(AppColors.huePeople),
               ),
-              const SizedBox(height: AppSpacing.sm),
+              const SizedBox(height: AppSpacing.md),
               if (appState.loadError != null)
                 EmptyState.error(
                   message: appState.loadError!,
@@ -72,18 +72,20 @@ class _PeopleScreenState extends State<PeopleScreen> {
               else if (people.isEmpty)
                 const EmptyState(message: 'Nenhuma compra ativa neste mês.')
               else
-                for (final person in people) ...[
+                // Respiro entre as linhas, não depois de cada uma: com um
+                // SizedBox por item, o último somava com o espaço de seção.
+                for (var i = 0; i < people.length; i++) ...[
+                  if (i > 0) const SizedBox(height: AppSpacing.sm),
                   PersonRow(
-                    label: person.label,
-                    total: person.total,
+                    label: people[i].label,
+                    total: people[i].total,
                     onShare: () => showShareBillDialog(
                       context,
-                      label: person.label,
-                      rows: appState.transactionsForPersonFor(_monthOffset, person.label),
-                      subtotal: person.total,
+                      label: people[i].label,
+                      rows: appState.transactionsForPersonFor(_monthOffset, people[i].label),
+                      subtotal: people[i].total,
                     ),
                   ),
-                  const SizedBox(height: AppSpacing.sm),
                 ],
             ],
           ),

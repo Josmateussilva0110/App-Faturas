@@ -48,6 +48,9 @@ class PurchaseTile extends StatelessWidget {
     return AppCard(
       onTap: onTap,
       accentColor: accent,
+      // Mais folgado que o card padrão: a linha carrega dois níveis (nome +
+      // valor, depois tags + progresso) e no padding padrão eles colavam.
+      padding: const EdgeInsets.all(AppSpacing.lg),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
@@ -71,7 +74,7 @@ class PurchaseTile extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: AppSpacing.sm),
+          const SizedBox(height: AppSpacing.md),
           Row(
             children: [
               Expanded(
@@ -96,7 +99,7 @@ class PurchaseTile extends StatelessWidget {
   }
 }
 
-/// "3 de 10" with a ring showing how much of the purchase is already paid.
+/// "3/10" with a ring showing how much of the purchase is already paid.
 ///
 /// A single-installment purchase has no progress to show — it reads "à vista"
 /// instead of the "1/1" that used to sit there looking like a countdown.
@@ -128,14 +131,16 @@ class _InstallmentProgress extends StatelessWidget {
           height: 18,
           child: CircularProgressIndicator(
             value: status.installmentNumber / purchase.installments,
-            strokeWidth: 3,
+            strokeWidth: 2.5,
             strokeCap: StrokeCap.round,
             backgroundColor: scheme.surfaceContainerHighest,
             color: color,
           ),
         ),
-        const SizedBox(width: AppSpacing.smPlus),
-        Text('${status.installmentNumber} de ${purchase.installments}', style: labelStyle),
+        const SizedBox(width: AppSpacing.sm),
+        // "1/2" e não "1 de 2": ocupa menos espaço ao lado do valor e lê
+        // igualmente rápido, que é o que a fração já significa em fatura.
+        Text('${status.installmentNumber}/${purchase.installments}', style: labelStyle),
       ],
     );
   }

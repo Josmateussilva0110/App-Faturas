@@ -47,8 +47,8 @@ class AppTheme {
         surfaceTintColor: Colors.transparent,
         elevation: 0,
         titleTextStyle: TextStyle(
-          fontWeight: FontWeight.w800,
-          fontSize: 19,
+          fontWeight: FontWeight.w700,
+          fontSize: 20,
           color: scheme.onSurface,
         ),
       ),

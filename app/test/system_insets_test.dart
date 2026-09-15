@@ -85,11 +85,69 @@ void main() {
     await tester.tap(find.text('Depositar'));
     await tester.pumpAndSettle();
 
+    // O resumo abre a tela: os três números empilhados, com o saldo fechando
+    // o bloco. Os rótulos ficam presos aqui porque foram renomeados no
+    // redesign e nada mais os cobria.
+    expect(find.text('Total de salários'), findsOneWidget);
+    expect(find.text('Crédito no cartão'), findsOneWidget);
+    expect(find.text('Saldo após o cartão'), findsOneWidget);
+
     final guardar = find.text('GUARDAR');
     await tester.dragUntilVisible(guardar, find.byType(ListView), const Offset(0, -200));
     await tester.pumpAndSettle();
 
+    expect(find.textContaining('Saldo restante:'), findsWidgets);
+
     expect(tester.getRect(guardar).bottom, lessThanOrEqualTo(_navBarTop(tester)));
+  });
+
+  testWidgets('a aba Meses cabe numa tela estreita sem estourar', (tester) async {
+    _useSmallScreenWithNavBar(tester);
+    await _pumpApp(tester);
+    await _signIn(tester);
+
+    await tester.tap(find.text('Meses'));
+    await tester.pumpAndSettle();
+
+    // O redesign deu mais respiro aos cards e aumentou a tipografia. Num
+    // aparelho de 360px isso é o que estoura primeiro — e o teste falha
+    // sozinho se qualquer RenderFlex passar da largura, porque o
+    // WidgetTester trata o overflow como exceção não esperada.
+    expect(find.text('Conferência da fatura'), findsOneWidget);
+    expect(find.text('Confere'), findsOneWidget);
+
+    // A lista só constrói o que está no viewport, então o resto da tela só
+    // existe depois de rolar — que é também o que exercita as linhas de
+    // parcela, fora da primeira dobra nessa altura.
+    await tester.dragUntilVisible(
+      find.text('Compra 1'),
+      find.byType(ListView),
+      const Offset(0, -200),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Parcelas do mês'), findsOneWidget);
+  });
+
+  testWidgets('Pessoas e Cartões cabem numa tela estreita sem estourar', (tester) async {
+    _useSmallScreenWithNavBar(tester);
+    await _pumpApp(tester);
+    await _signIn(tester);
+
+    // As duas linhas ficaram mais largas no redesign — avatar, nome, valor e
+    // botões disputando 360px. É onde um RenderFlex estoura primeiro, e o
+    // WidgetTester trata overflow como exceção não esperada, então basta
+    // renderizar para o teste valer.
+    await tester.tap(find.text('Pessoas'));
+    await tester.pumpAndSettle();
+    expect(find.text('Gastos por pessoa'), findsOneWidget);
+
+    await tester.tap(find.text('Cartões'));
+    await tester.pumpAndSettle();
+    expect(find.text('Meus cartões'), findsOneWidget);
+    expect(find.text('Nubank'), findsOneWidget);
+    expect(find.byTooltip('Editar cartão'), findsOneWidget);
+    expect(find.byTooltip('Excluir cartão'), findsOneWidget);
   });
 
   testWidgets('no tema claro os ícones da barra do sistema ficam escuros', (tester) async {

@@ -81,7 +81,7 @@ void main() {
     // agora dizem a mesma coisa em vez de 'Faturas' e 'Início'.
     expect(find.widgetWithText(AppBar, 'Início'), findsOneWidget);
     expect(find.widgetWithText(NavigationBar, 'Início'), findsOneWidget);
-    expect(find.text('Compras ativas'.toUpperCase()), findsOneWidget);
+    expect(find.text('Compras ativas'), findsOneWidget);
 
     await tester.tap(find.text('Cartões'));
     await tester.pumpAndSettle();
@@ -106,7 +106,7 @@ void main() {
     await tester.pumpAndSettle();
 
     // Fatura (165) e registrado (165) batem: estado "Confere".
-    expect(find.text('Conferência da fatura'.toUpperCase()), findsOneWidget);
+    expect(find.text('Conferência da fatura'), findsOneWidget);
     expect(find.text('Confere'), findsOneWidget);
     expect(find.text('Bateu exatamente com a fatura.'), findsOneWidget);
 

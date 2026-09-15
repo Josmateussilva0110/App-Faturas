@@ -1,12 +1,13 @@
-import '../../../core/theme/app_palette.dart';
 import 'package:flutter/material.dart';
 
 import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_palette.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../state/app_state.dart';
 import '../../../widgets/app_card.dart';
+import '../../../widgets/labeled_amount.dart';
 
 /// One card's bill reconciliation: what the bank charges, what the app has
 /// registered, and how far apart they are.
@@ -15,6 +16,11 @@ import '../../../widgets/app_card.dart';
 /// the sentence is the part that says what to *do*, which a color alone
 /// can't. Note that [StatementStatus.extra] is informational blue rather than
 /// an error: mid-month, a bill that hasn't closed yet is the normal case.
+///
+/// Os três números já foram uma linha só de colunas iguais. A diferença é a
+/// resposta da tela — "confere ou não?" — e lado a lado com os outros dois
+/// ela lia como mais um dado. Agora "Fatura" e "Registrado" dividem a linha,
+/// que é a comparação, e a diferença fica sozinha embaixo, que é a conclusão.
 class StatementCard extends StatelessWidget {
   const StatementCard({super.key, required this.check, required this.onTap});
 
@@ -27,18 +33,19 @@ class StatementCard extends StatelessWidget {
     final palette = context.palette;
     final style = _StatementStyle.of(check.status, scheme: scheme, palette: palette);
     final difference = check.difference;
+    final detail = style.detail(check);
 
     return AppCard(
-      color: palette.softSurface,
       onTap: onTap,
+      padding: const EdgeInsets.all(AppSpacing.lg),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
           Row(
             children: [
-              Icon(style.icon, size: 20, color: style.color),
-              const SizedBox(width: AppSpacing.smPlus),
+              Icon(style.icon, size: 18, color: style.color),
+              const SizedBox(width: AppSpacing.sm),
               Expanded(
                 child: Text(
                   check.card.name,
@@ -56,32 +63,47 @@ class StatementCard extends StatelessWidget {
               borderRadius: BorderRadius.circular(AppRadius.xs),
               child: LinearProgressIndicator(
                 value: check.progress!.clamp(0.0, 1.0).toDouble(),
-                minHeight: 6,
-                backgroundColor: style.color.withValues(alpha: 0.18),
+                minHeight: 5,
+                backgroundColor: style.color.withValues(alpha: 0.16),
                 color: style.color,
               ),
             ),
           ],
-          const SizedBox(height: AppSpacing.md),
+          const SizedBox(height: AppSpacing.lg),
           Row(
             children: [
-              _Figure(
-                label: 'Fatura atual',
-                value: check.billed == null ? '—' : formatMoney(check.billed!),
+              Expanded(
+                child: LabeledAmount(
+                  label: 'Fatura',
+                  value: check.billed == null ? '—' : formatMoney(check.billed!),
+                ),
               ),
-              _Figure(label: 'Registrado', value: formatMoney(check.registered)),
-              _Figure(
-                label: 'Diferença',
-                value: difference == null ? '—' : _signed(difference),
-                color: difference == null ? null : style.color,
+              Expanded(
+                child: LabeledAmount(label: 'Registrado', value: formatMoney(check.registered)),
               ),
             ],
           ),
-          const SizedBox(height: AppSpacing.smPlus),
-          Text(
-            style.hint(check),
-            style: context.text.field,
+          const SizedBox(height: AppSpacing.md),
+          LabeledAmount(
+            label: 'Diferença',
+            value: difference == null ? '—' : _signed(difference),
+            // A cor é o que destaca a diferença; o tamanho fica igual ao dos
+            // outros dois, senão ela grita mais alto que o valor da fatura.
+            color: difference == null ? null : style.color,
           ),
+          const SizedBox(height: AppSpacing.md),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Icon(style.icon, size: 13, color: style.color),
+              const SizedBox(width: AppSpacing.xsPlus),
+              Expanded(child: Text(style.hint(check), style: context.text.field)),
+            ],
+          ),
+          if (detail != null) ...[
+            const SizedBox(height: AppSpacing.xs),
+            Text(detail, style: context.text.caption),
+          ],
         ],
       ),
     );
@@ -101,12 +123,19 @@ class _StatementStyle {
     required this.color,
     required this.label,
     required this.hint,
+    required this.detail,
   });
 
   final IconData icon;
   final Color color;
   final String label;
+
+  /// A frase curta: o que aconteceu.
   final String Function(StatementCheck check) hint;
+
+  /// A explicação, quando existe — segunda linha, menor. Separada do [hint]
+  /// porque juntas viravam um bloco de texto que ninguém lia até o fim.
+  final String? Function(StatementCheck check) detail;
 
   factory _StatementStyle.of(
     StatementStatus status, {
@@ -122,8 +151,12 @@ class _StatementStyle {
           hint: (check) {
             final diff = check.difference ?? 0;
             if (diff.abs() < 0.005) return 'Bateu exatamente com a fatura.';
-            return 'Dentro da tolerância de ${formatMoney(kStatementTolerance)} — '
-                'arredondamento do banco.';
+            return 'Dentro da tolerância de ${formatMoney(kStatementTolerance)}';
+          },
+          detail: (check) {
+            final diff = check.difference ?? 0;
+            if (diff.abs() < 0.005) return null;
+            return 'Diferença causada pelo arredondamento do banco.';
           },
         );
       case StatementStatus.missing:
@@ -133,15 +166,15 @@ class _StatementStyle {
           label: 'Falta lançar',
           hint: (check) =>
               'Faltam ${formatMoney(check.difference!.abs())} em compras para lançar no app.',
+          detail: (_) => null,
         );
       case StatementStatus.extra:
         return _StatementStyle(
           icon: Icons.info_outline,
           color: scheme.primary,
           label: 'Registrado a mais',
-          hint: (check) =>
-              '${formatMoney(check.difference!.abs())} a mais que a fatura. '
-              'Ela pode não ter fechado, ou há compra repetida.',
+          hint: (check) => '${formatMoney(check.difference!.abs())} a mais que a fatura.',
+          detail: (_) => 'Ela pode não ter fechado, ou há compra repetida.',
         );
       case StatementStatus.unset:
         return _StatementStyle(
@@ -149,6 +182,7 @@ class _StatementStyle {
           color: scheme.onSurfaceVariant,
           label: 'Informar fatura',
           hint: (check) => 'Toque para informar o valor da fatura e conferir.',
+          detail: (_) => null,
         );
     }
   }
@@ -164,41 +198,14 @@ class _StatusChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.smPlus, vertical: AppSpacing.xs),
       decoration: BoxDecoration(
         color: color.withValues(alpha: dark ? 0.22 : 0.12),
         borderRadius: BorderRadius.circular(AppRadius.pill),
       ),
       child: Text(
         label,
-        style: context.text.caption.copyWith(fontWeight: FontWeight.w700, color: color),
-      ),
-    );
-  }
-}
-
-class _Figure extends StatelessWidget {
-  const _Figure({required this.label, required this.value, this.color});
-
-  final String label;
-  final String value;
-  final Color? color;
-
-  @override
-  Widget build(BuildContext context) {
-    return Expanded(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(label, style: context.text.caption),
-          const SizedBox(height: 2),
-          Text(
-            value,
-            style: context.text.body.copyWith(fontWeight: FontWeight.w700, color: color),
-            overflow: TextOverflow.ellipsis,
-          ),
-        ],
+        style: context.text.caption.copyWith(fontWeight: FontWeight.w600, color: color),
       ),
     );
   }

@@ -85,25 +85,28 @@ class MonthlyScreen extends StatelessWidget {
                 icon: Icons.trending_up,
               ),
               if (checks.isNotEmpty) ...[
-                const SizedBox(height: AppSpacing.lg),
+                const SizedBox(height: AppSpacing.xl),
                 SectionLabel(
                   'Conferência da fatura',
                   icon: Icons.fact_check_outlined,
                   iconColor: context.palette.iconTint(AppColors.hueCards),
                 ),
-                const SizedBox(height: AppSpacing.sm),
-                for (final check in checks) ...[
-                  StatementCard(check: check, onTap: () => _editStatement(context, check)),
-                  const SizedBox(height: AppSpacing.sm),
+                const SizedBox(height: AppSpacing.md),
+                // O respiro fica *entre* os cards, não depois de cada um: com
+                // um SizedBox por item, o último somava com o espaço de seção
+                // e a distância até "Parcelas do mês" saía maior que as outras.
+                for (var i = 0; i < checks.length; i++) ...[
+                  if (i > 0) const SizedBox(height: AppSpacing.sm),
+                  StatementCard(check: checks[i], onTap: () => _editStatement(context, checks[i])),
                 ],
               ],
-              const SizedBox(height: AppSpacing.lg),
+              const SizedBox(height: AppSpacing.xl),
               SectionLabel(
                 'Parcelas do mês',
                 icon: Icons.receipt_long_outlined,
                 iconColor: Theme.of(context).colorScheme.primary,
               ),
-              const SizedBox(height: AppSpacing.sm),
+              const SizedBox(height: AppSpacing.md),
               if (appState.loadError != null)
                 EmptyState.error(
                   message: appState.loadError!,
@@ -112,16 +115,16 @@ class MonthlyScreen extends StatelessWidget {
               else if (entries.isEmpty)
                 const EmptyState(message: 'Nenhuma parcela neste mês.')
               else
-                for (final entry in entries) ...[
+                for (var i = 0; i < entries.length; i++) ...[
+                  if (i > 0) const SizedBox(height: AppSpacing.sm),
                   PurchaseTile(
-                    purchase: entry.purchase,
-                    status: entry.status,
-                    cardName: appState.cardName(entry.purchase.cardId),
-                    cardHue: appState.cardHue(entry.purchase.cardId),
+                    purchase: entries[i].purchase,
+                    status: entries[i].status,
+                    cardName: appState.cardName(entries[i].purchase.cardId),
+                    cardHue: appState.cardHue(entries[i].purchase.cardId),
                     alwaysShowPersonTag: true,
-                    onTap: () => showEditPurchaseDialog(context, entry.purchase),
+                    onTap: () => showEditPurchaseDialog(context, entries[i].purchase),
                   ),
-                  const SizedBox(height: AppSpacing.sm),
                 ],
             ],
           ),

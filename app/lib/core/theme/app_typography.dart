@@ -26,7 +26,7 @@ class AppTypography extends ThemeExtension<AppTypography> {
       money: const TextStyle(fontSize: 19, fontWeight: FontWeight.w800),
       title: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
       body: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
-      label: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
+      label: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
       field: TextStyle(fontSize: 12, color: scheme.onSurfaceVariant),
       caption: TextStyle(fontSize: 11, color: scheme.onSurfaceVariant),
     );

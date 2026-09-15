@@ -40,7 +40,7 @@ class TagChip extends StatelessWidget {
     }
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm, vertical: AppSpacing.xs),
       decoration: BoxDecoration(
         color: background,
         borderRadius: BorderRadius.circular(AppRadius.sm),
@@ -54,7 +54,9 @@ class TagChip extends StatelessWidget {
           ],
           Text(
             label,
-            style: context.text.caption.copyWith(letterSpacing: 0.02, color: foreground),
+            // Um passo abaixo de `caption`: a tag é o menor nível da linha,
+            // e no tamanho anterior competia com o nome da compra.
+            style: context.text.caption.copyWith(fontSize: 10, color: foreground),
           ),
         ],
       ),

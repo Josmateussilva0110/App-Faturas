@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_spacing.dart';
+import '../../core/theme/app_typography.dart';
 import '../../core/utils/formatters.dart';
 import '../../models/card_model.dart';
 import '../../widgets/app_text_field.dart';
@@ -63,13 +64,7 @@ class _CardDialogState extends State<_CardDialog> {
             onChanged: (_) => setState(() {}),
           ),
           const SizedBox(height: AppSpacing.lg),
-          Text(
-            'Cor',
-            style: TextStyle(
-              fontSize: 12,
-              color: Theme.of(context).colorScheme.onSurfaceVariant,
-            ),
-          ),
+          Text('Cor', style: context.text.field),
           const SizedBox(height: AppSpacing.sm),
           Wrap(
             spacing: AppSpacing.sm,

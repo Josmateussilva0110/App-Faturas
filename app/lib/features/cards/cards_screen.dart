@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_spacing.dart';
 import '../../core/toast/app_toast.dart';
+import '../../models/card_model.dart';
 import '../../state/app_state.dart';
 import '../../widgets/empty_state.dart';
 import '../../widgets/section_label.dart';
@@ -52,7 +53,7 @@ class CardsScreen extends StatelessWidget {
                 icon: Icons.credit_card_outlined,
                 iconColor: context.palette.iconTint(AppColors.hueCards),
               ),
-              const SizedBox(height: AppSpacing.sm),
+              const SizedBox(height: AppSpacing.md),
               if (appState.loadError != null)
                 EmptyState.error(
                   message: appState.loadError!,
@@ -64,37 +65,42 @@ class CardsScreen extends StatelessWidget {
                   icon: Icons.credit_card_outlined,
                 )
               else
-                for (final card in appState.cards) ...[
-                  CardRow(
-                    name: card.name,
-                    hue: card.resolvedHue,
-                    onEdit: () async {
-                      final draft = await showCardDialog(context, existing: card);
-                      if (draft == null || !context.mounted) return;
-
-                      final saved = await context
-                          .read<AppState>()
-                          .updateCard(card.id, draft.name, draft.hue);
-                      if (saved) AppToast.success('Cartão atualizado.');
-                    },
-                    onDelete: () async {
-                      final hasPurchases = appState.purchases.any((p) => p.cardId == card.id);
-                      final deleted = await context.read<AppState>().deleteCard(card.id);
-                      if (!deleted) return;
-
-                      if (hasPurchases) {
-                        AppToast.warning('Cartão excluído — algumas compras ficaram sem cartão vinculado.');
-                      } else {
-                        AppToast.success('Cartão excluído.');
-                      }
-                    },
-                  ),
-                  const SizedBox(height: AppSpacing.sm),
+                for (var i = 0; i < appState.cards.length; i++) ...[
+                  if (i > 0) const SizedBox(height: AppSpacing.sm),
+                  _cardRow(context, appState, appState.cards[i]),
                 ],
             ],
           ),
         ),
       ),
+    );
+  }
+
+  /// Uma linha da lista. Vive fora do `children` porque os dois callbacks
+  /// ocupavam mais linhas que o resto da tela inteira, e o esqueleto dela
+  /// sumia no meio deles.
+  Widget _cardRow(BuildContext context, AppState appState, CardModel card) {
+    return CardRow(
+      name: card.name,
+      hue: card.resolvedHue,
+      onEdit: () async {
+        final draft = await showCardDialog(context, existing: card);
+        if (draft == null || !context.mounted) return;
+
+        final saved = await context.read<AppState>().updateCard(card.id, draft.name, draft.hue);
+        if (saved) AppToast.success('Cartão atualizado.');
+      },
+      onDelete: () async {
+        final hasPurchases = appState.purchases.any((p) => p.cardId == card.id);
+        final deleted = await context.read<AppState>().deleteCard(card.id);
+        if (!deleted) return;
+
+        if (hasPurchases) {
+          AppToast.warning('Cartão excluído — algumas compras ficaram sem cartão vinculado.');
+        } else {
+          AppToast.success('Cartão excluído.');
+        }
+      },
     );
   }
 }

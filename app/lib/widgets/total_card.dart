@@ -22,7 +22,7 @@ class TotalCard extends StatelessWidget {
     required this.value,
     this.meta,
     this.icon,
-    this.valueFontSize = 30,
+    this.valueFontSize = 28,
     this.centered = false,
     this.goalProgress,
     this.goalLabel,
@@ -52,7 +52,7 @@ class TotalCard extends StatelessWidget {
 
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(AppSpacing.md),
+      padding: const EdgeInsets.all(AppSpacing.lg),
       decoration: BoxDecoration(
         color: scheme.primary,
         borderRadius: BorderRadius.circular(centered ? AppRadius.lg : AppRadius.md),
