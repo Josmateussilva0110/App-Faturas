@@ -1,15 +1,15 @@
 /// The account payload from `GET /profile` and `PUT /profile`.
 ///
-/// The backend selects more columns than it returns — `mapUserProfileRow`
-/// narrows the row down to these fields, so `earnings_percent` and
-/// `must_change_password` (present in the React Native project's profile
-/// type) are **not** available here.
+/// O backend seleciona mais colunas do que devolve: `mapUserProfileRow`
+/// estreita a linha para estes campos, então `earnings_percent` (presente no
+/// projeto React Native) **não** chega aqui.
 class UserProfile {
   const UserProfile({
     required this.id,
     required this.username,
     required this.email,
     this.spendingLimit,
+    this.mustChangePassword = false,
   });
 
   factory UserProfile.fromJson(Map<String, dynamic> json) {
@@ -18,6 +18,7 @@ class UserProfile {
       username: json['username'] as String? ?? '',
       email: json['email'] as String? ?? '',
       spendingLimit: (json['spending_limit'] as num?)?.toDouble(),
+      mustChangePassword: json['must_change_password'] as bool? ?? false,
     );
   }
 
@@ -29,4 +30,12 @@ class UserProfile {
   /// junto do perfil para o app não precisar de uma segunda requisição só
   /// para lê-la no boot.
   final double? spendingLimit;
+
+  /// A senha em uso é temporária: alguém atendeu a solicitação de reset à
+  /// mão e marcou a conta. O app prende o usuário na troca de senha até ele
+  /// definir uma própria.
+  ///
+  /// Falso por omissão de propósito — se o campo não vier, o certo é deixar
+  /// entrar, e não trancar todo mundo para fora.
+  final bool mustChangePassword;
 }

@@ -2,12 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../core/theme/app_spacing.dart';
+import '../../core/theme/app_typography.dart';
 import '../../data/services/auth_service.dart';
 import '../../state/app_state.dart';
 import '../../widgets/avatar_circle.dart';
 import '../../widgets/form_section_card.dart';
 import '../../widgets/section_label.dart';
 import '../../widgets/segmented_choice.dart';
+import '../auth/change_password_screen.dart';
 import '../onboarding/welcome_screen.dart';
 
 /// The "Perfil" tab: the signed-in account (from `GET /profile`), theme
@@ -102,6 +104,31 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     expand: true,
                     padding: const EdgeInsets.symmetric(vertical: 16),
                     fontSize: 15,
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: AppSpacing.lg),
+            FormSectionCard(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  SectionLabel('Segurança', icon: Icons.lock_outline, iconColor: scheme.primary),
+                  const SizedBox(height: AppSpacing.sm),
+                  InkWell(
+                    onTap: () => Navigator.of(context).push(
+                      MaterialPageRoute<void>(builder: (_) => const ChangePasswordScreen()),
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: AppSpacing.smPlus),
+                      child: Row(
+                        children: [
+                          Expanded(child: Text('Alterar senha', style: context.text.body)),
+                          Icon(Icons.chevron_right, color: scheme.onSurfaceVariant),
+                        ],
+                      ),
+                    ),
                   ),
                 ],
               ),

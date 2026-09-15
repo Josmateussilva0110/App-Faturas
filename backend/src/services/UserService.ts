@@ -359,10 +359,14 @@ class UserService {
                     })
 
                 if (reauthError || !reauthData.session) {
+                    // INVALID_PASSWORD (422), não INVALID_CREDENTIALS (401):
+                    // a sessão está válida, quem não confere é o campo. Com
+                    // 401 o interceptor do app entende "token expirado",
+                    // renova e repete a requisição a cada erro de digitação.
                     return {
                         status: false,
                         error: {
-                            code: UserErrorCode.INVALID_CREDENTIALS,
+                            code: UserErrorCode.INVALID_PASSWORD,
                             message: "Senha atual incorreta.",
                         },
                     }

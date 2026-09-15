@@ -41,12 +41,14 @@ Map<String, dynamic> fakeProfile({
   String username = 'Mateus',
   String email = 'mateus@email.com',
   double? spendingLimit,
+  bool mustChangePassword = false,
 }) {
   return {
     'id': 'u1',
     'username': username,
     'email': email,
     'spending_limit': spendingLimit,
+    'must_change_password': mustChangePassword,
   };
 }
 

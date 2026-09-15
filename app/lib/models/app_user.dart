@@ -1,13 +1,25 @@
-/// The logged-in user. Static placeholder data until a real auth session
-/// exists — see [ProfileScreen]'s "Sair da conta" button.
+/// The logged-in user, from `GET /profile`.
 class AppUser {
-  const AppUser({required this.id, required this.name, required this.email});
+  const AppUser({
+    required this.id,
+    required this.name,
+    required this.email,
+    this.mustChangePassword = false,
+  });
 
   final String id;
   final String name;
   final String email;
 
-  AppUser copyWith({String? name, String? email}) {
-    return AppUser(id: id, name: name ?? this.name, email: email ?? this.email);
+  /// A senha em uso é temporária (ver [UserProfile.mustChangePassword]).
+  final bool mustChangePassword;
+
+  AppUser copyWith({String? name, String? email, bool? mustChangePassword}) {
+    return AppUser(
+      id: id,
+      name: name ?? this.name,
+      email: email ?? this.email,
+      mustChangePassword: mustChangePassword ?? this.mustChangePassword,
+    );
   }
 }

@@ -200,6 +200,7 @@ class AppState extends ChangeNotifier {
           // the profile never shows an empty name.
           name: profile.username.isNotEmpty ? profile.username : profile.email,
           email: profile.email,
+          mustChangePassword: profile.mustChangePassword,
         ),
         spendingLimit: profile.spendingLimit,
       );
@@ -237,6 +238,18 @@ class AppState extends ChangeNotifier {
     if (saved == null) return;
 
     spendingLimit = limit;
+    notifyListeners();
+  }
+
+  // ── Senha ────────────────────────────────────────────────────────────
+
+  /// Libera o app depois que o usuário trocou a senha temporária.
+  ///
+  /// O backend já baixou a flag na mesma requisição; refletir aqui evita um
+  /// `GET /profile` só para descobrir o que a resposta de sucesso implica.
+  void clearMustChangePassword() {
+    if (!currentUser.mustChangePassword) return;
+    currentUser = currentUser.copyWith(mustChangePassword: false);
     notifyListeners();
   }
 
