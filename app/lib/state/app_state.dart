@@ -492,6 +492,7 @@ class AppState extends ChangeNotifier {
   // purchases count against savings — other people's purchases are their
   // own to pay back, not the user's.
   double get totalSalaries => salaries.fold(0.0, (sum, s) => sum + s.value);
+  double get totalExpenses => expenses.fold(0.0, (sum, e) => sum + e.value);
   double afterCreditFor(int offset) => totalSalaries - ownTotalFor(offset);
   double get afterCredit => afterCreditFor(0);
 
@@ -591,7 +592,7 @@ class AppState extends ChangeNotifier {
 
     final lines = [
       for (final e in rows)
-        '  ▸ ${formatMoney(e.purchase.amount)}  (${e.status.installmentNumber}/${e.purchase.installments})',
+        '  ▸ ${e.purchase.name}: ${formatMoney(e.purchase.amount)}  (${e.status.installmentNumber}/${e.purchase.installments})',
     ];
     const sep = '─────────────────────';
     final totalLines = discount > 0

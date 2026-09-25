@@ -24,6 +24,10 @@ class MoneyListRow extends StatelessWidget {
     this.meta,
   });
 
+  /// Largura fixa do botão de remover. Exposta para o total no cabeçalho do
+  /// card reservar o mesmo espaço e ficar alinhado com os valores das linhas.
+  static const double trailingWidth = 28;
+
   final String name;
   final String valueLabel;
   final String? meta;
@@ -61,14 +65,17 @@ class MoneyListRow extends StatelessWidget {
             ),
             const SizedBox(width: AppSpacing.smPlus),
             Text(valueLabel, style: text.body.copyWith(fontWeight: FontWeight.w700)),
-            IconButton(
-              onPressed: onRemove,
-              icon: const Icon(Icons.close, size: 16),
-              color: scheme.error,
-              tooltip: 'Remover',
-              constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
-              padding: EdgeInsets.zero,
-              visualDensity: VisualDensity.compact,
+            SizedBox(
+              width: trailingWidth,
+              child: IconButton(
+                onPressed: onRemove,
+                icon: const Icon(Icons.close, size: 16),
+                color: scheme.error,
+                tooltip: 'Remover',
+                constraints: const BoxConstraints(minWidth: trailingWidth, minHeight: trailingWidth),
+                padding: EdgeInsets.zero,
+                visualDensity: VisualDensity.compact,
+              ),
             ),
           ],
         ),

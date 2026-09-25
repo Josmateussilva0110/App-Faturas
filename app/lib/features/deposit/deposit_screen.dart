@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_spacing.dart';
+import '../../core/theme/app_typography.dart';
 import '../../core/toast/app_toast.dart';
 import '../../core/utils/formatters.dart';
 import '../../models/expense.dart';
@@ -256,7 +257,24 @@ class _DepositScreenState extends State<DepositScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    SectionLabel('Despesas', icon: Icons.trending_down, iconColor: expenseColor),
+                    Row(
+                      children: [
+                        SectionLabel('Despesas', icon: Icons.trending_down, iconColor: expenseColor),
+                        const Spacer(),
+                        if (expenseRows.isNotEmpty) ...[
+                          Text(
+                            formatMoney(appState.totalExpenses),
+                            style: context.text.body.copyWith(
+                              fontWeight: FontWeight.w700,
+                              color: scheme.error,
+                            ),
+                          ),
+                          // Mesmo espaço do botão de remover das linhas, para
+                          // o total cair na coluna dos valores.
+                          const SizedBox(width: MoneyListRow.trailingWidth),
+                        ],
+                      ],
+                    ),
                     const SizedBox(height: AppSpacing.sm),
                     if (expenseRows.isEmpty)
                       const EmptyState(
