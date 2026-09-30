@@ -1,14 +1,12 @@
-import '../../core/theme/app_palette.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_spacing.dart';
 import '../../core/toast/app_toast.dart';
 import '../../models/card_model.dart';
 import '../../state/app_state.dart';
 import '../../widgets/empty_state.dart';
-import '../../widgets/section_label.dart';
+import '../../widgets/grouped_list_card.dart';
 import 'card_form_dialog.dart';
 import 'widgets/card_row.dart';
 
@@ -19,24 +17,30 @@ class CardsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final appState = context.watch<AppState>();
+    // Uma passada só pelas compras para todos os cartões, não uma por linha.
+    final monthTotals = appState.totalsByCardFor(0);
 
     return Scaffold(
       appBar: AppBar(title: const Text('Cartões')),
-      // Criar conteúdo é FAB em todo o app; antes disto era ícone na AppBar
-      // aqui e FAB nas compras, para a mesma intenção.
-      floatingActionButton: FloatingActionButton(
-        onPressed: () async {
-          final draft = await showCardDialog(context);
-          if (draft == null || !context.mounted) return;
+      // O Scaffold posiciona o FAB ignorando o padding de baixo, e é nele que
+      // o shell reserva o espaço da barra flutuante — sem este recuo o botão
+      // fica escondido atrás dela.
+      floatingActionButton: Padding(
+        padding: EdgeInsets.only(bottom: MediaQuery.paddingOf(context).bottom),
+        child: FloatingActionButton(
+          onPressed: () async {
+            final draft = await showCardDialog(context);
+            if (draft == null || !context.mounted) return;
 
-          // O AppState já avisou o usuário se falhou; só o sucesso é nosso
-          // para anunciar.
-          final added = await context.read<AppState>().addCard(draft.name, draft.hue);
-          if (added) AppToast.success('Cartão "${draft.name}" adicionado.');
-        },
-        heroTag: 'fab-card',
-        tooltip: 'Novo cartão',
-        child: const Icon(Icons.add),
+            // O AppState já avisou o usuário se falhou; só o sucesso é nosso
+            // para anunciar.
+            final added = await context.read<AppState>().addCard(draft.name, draft.hue);
+            if (added) AppToast.success('Cartão "${draft.name}" adicionado.');
+          },
+          heroTag: 'fab-card',
+          tooltip: 'Novo cartão',
+          child: const Icon(Icons.add),
+        ),
       ),
       body: SafeArea(
         child: RefreshIndicator(
@@ -48,27 +52,22 @@ class CardsScreen extends StatelessWidget {
             physics: const AlwaysScrollableScrollPhysics(),
             padding: const EdgeInsets.all(AppSpacing.lg),
             children: [
-              SectionLabel(
-                'Meus cartões',
-                icon: Icons.credit_card_outlined,
-                iconColor: context.palette.iconTint(AppColors.hueCards),
-              ),
-              const SizedBox(height: AppSpacing.md),
               if (appState.loadError != null)
                 EmptyState.error(
                   message: appState.loadError!,
                   onRetry: () => context.read<AppState>().load(),
                 )
-              else if (appState.cards.isEmpty)
-                const EmptyState(
-                  message: 'Nenhum cartão cadastrado.',
-                  icon: Icons.credit_card_outlined,
-                )
               else
-                for (var i = 0; i < appState.cards.length; i++) ...[
-                  if (i > 0) const SizedBox(height: AppSpacing.sm),
-                  _cardRow(context, appState, appState.cards[i]),
-                ],
+                GroupedListCard(
+                  title: 'Meus cartões',
+                  empty: const EmptyState(
+                    message: 'Nenhum cartão cadastrado.',
+                    icon: Icons.credit_card_outlined,
+                  ),
+                  children: [
+                    for (final card in appState.cards) _cardRow(context, appState, card, monthTotals[card.id] ?? 0),
+                  ],
+                ),
             ],
           ),
         ),
@@ -79,10 +78,11 @@ class CardsScreen extends StatelessWidget {
   /// Uma linha da lista. Vive fora do `children` porque os dois callbacks
   /// ocupavam mais linhas que o resto da tela inteira, e o esqueleto dela
   /// sumia no meio deles.
-  Widget _cardRow(BuildContext context, AppState appState, CardModel card) {
+  Widget _cardRow(BuildContext context, AppState appState, CardModel card, double monthTotal) {
     return CardRow(
       name: card.name,
       hue: card.resolvedHue,
+      monthTotal: monthTotal,
       onEdit: () async {
         final draft = await showCardDialog(context, existing: card);
         if (draft == null || !context.mounted) return;

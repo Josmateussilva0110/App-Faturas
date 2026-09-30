@@ -5,6 +5,7 @@ import 'package:fatura/core/utils/formatters.dart';
 import 'package:fatura/data/api/api_client.dart';
 import 'package:fatura/data/api/auth_storage.dart';
 import 'package:fatura/data/api/token_manager.dart';
+import 'package:fatura/features/monthly/monthly_screen.dart';
 import 'package:fatura/main.dart';
 import 'package:fatura/models/auth_data.dart';
 
@@ -26,6 +27,17 @@ Future<void> _signIn(WidgetTester tester) async {
   await tester.enterText(find.byType(TextField).first, 'voce@email.com');
   await tester.enterText(find.byType(TextField).last, 'senha123');
   await tester.tap(find.widgetWithText(FilledButton, 'Entrar'));
+  await tester.pumpAndSettle();
+}
+
+/// Meses abre com a visão geral e o gráfico; a conferência fica abaixo da
+/// primeira dobra, e a lista preguiçosa só a monta depois de rolar.
+Future<void> _scrollMonthlyTo(WidgetTester tester, Finder target) async {
+  await tester.scrollUntilVisible(
+    target,
+    200,
+    scrollable: find.descendant(of: find.byType(MonthlyScreen), matching: find.byType(Scrollable)).first,
+  );
   await tester.pumpAndSettle();
 }
 
@@ -77,13 +89,11 @@ void main() {
 
     // The session returned by the backend is now the active one.
     expect(tokenManager.accessToken, 'access-1');
-    // Duas vezes de propósito: título da AppBar e rótulo da aba, que
-    // agora dizem a mesma coisa em vez de 'Faturas' e 'Início'.
-    expect(find.widgetWithText(AppBar, 'Início'), findsOneWidget);
-    expect(find.widgetWithText(NavigationBar, 'Início'), findsOneWidget);
-    expect(find.text('Compras ativas'), findsOneWidget);
+    // A Home não tem AppBar: abre na saudação e no card do mês.
+    expect(find.text('Total do mês'), findsOneWidget);
+    expect(find.byTooltip('Início'), findsOneWidget);
 
-    await tester.tap(find.text('Cartões'));
+    await tester.tap(find.byTooltip('Cartões'));
     await tester.pumpAndSettle();
     expect(find.text('Nubank'), findsOneWidget);
 
@@ -102,16 +112,19 @@ void main() {
     await tester.tap(find.widgetWithText(FilledButton, 'Entrar'));
     await tester.pumpAndSettle();
 
-    await tester.tap(find.text('Meses'));
+    await tester.tap(find.byTooltip('Meses'));
     await tester.pumpAndSettle();
 
-    // Fatura (165) e registrado (165) batem: estado "Confere".
+    await _scrollMonthlyTo(tester, find.text('Conferência da fatura'));
     expect(find.text('Conferência da fatura'), findsOneWidget);
-    expect(find.text('Confere'), findsOneWidget);
+    await _scrollMonthlyTo(tester, find.text('Bateu exatamente com a fatura.'));
+    // Fatura (165) e registrado (165) batem: estado "Confere" — no bolso da
+    // carteira e no detalhe do cartão aberto.
+    expect(find.text('Confere'), findsNWidgets(2));
     expect(find.text('Bateu exatamente com a fatura.'), findsOneWidget);
 
     // O diálogo abre com o valor atual e mostra o total registrado.
-    await tester.tap(find.text('Confere'));
+    await tester.tap(find.text('Bateu exatamente com a fatura.'));
     await tester.pumpAndSettle();
     expect(find.text('Fatura · Nubank'), findsOneWidget);
     expect(find.text('Registrado no app: R\$ 165,00'), findsOneWidget);
@@ -127,7 +140,7 @@ void main() {
     await _pumpApp(tester);
     await _signIn(tester);
 
-    await tester.tap(find.text('Meses'));
+    await tester.tap(find.byTooltip('Meses'));
     await tester.pumpAndSettle();
 
     final current = formatMonthLabel(currentAbsoluteMonth());
@@ -229,10 +242,8 @@ void main() {
 
     // No welcome screen, no login: the session was restored at boot.
     expect(find.widgetWithText(FilledButton, 'Entrar'), findsNothing);
-    // Duas vezes de propósito: título da AppBar e rótulo da aba, que
-    // agora dizem a mesma coisa em vez de 'Faturas' e 'Início'.
-    expect(find.widgetWithText(AppBar, 'Início'), findsOneWidget);
-    expect(find.widgetWithText(NavigationBar, 'Início'), findsOneWidget);
+    expect(find.text('Total do mês'), findsOneWidget);
+    expect(find.byTooltip('Início'), findsOneWidget);
     expect(tokenManager.accessToken, 'access-1');
   });
 

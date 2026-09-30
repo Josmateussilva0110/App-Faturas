@@ -83,9 +83,10 @@ void main() {
       final appState = AppState(ApiFaturaRepository());
       await appState.load();
 
-      expect(appState.totalForCard(0, 'c1'), 165);
+      final totals = appState.totalsByCardFor(0);
+      expect(totals['c1'], 165);
       // Cartão que não existe nas compras não puxa nada de outro cartão.
-      expect(appState.totalForCard(0, 'c-outro'), 0);
+      expect(totals.containsKey('c-outro'), isFalse);
     });
 
     test('a conferência do mês casa a fatura com o cartão certo', () async {

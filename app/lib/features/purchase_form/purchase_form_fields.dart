@@ -7,10 +7,13 @@ import '../../core/utils/formatters.dart';
 import '../../models/card_model.dart';
 import '../../widgets/app_text_field.dart';
 import '../../widgets/form_section_card.dart';
+import '../../widgets/month_selector.dart';
 import '../../widgets/section_label.dart';
 import '../../widgets/segmented_choice.dart';
 import 'purchase_form_values.dart';
+import 'widgets/amount_hero.dart';
 import 'widgets/card_choice_chips.dart';
+import 'widgets/installment_picker.dart';
 
 /// The purchase name/amount/installments/card/date/person fields, shared by
 /// both the "Nova compra" screen and the "Editar compra" dialog so the two
@@ -62,24 +65,22 @@ class _PurchaseFormFieldsState extends State<PurchaseFormFields> {
   late final _personController = TextEditingController(text: widget.initialPerson);
   late final _nameController = TextEditingController(text: widget.initialName);
   late final _amountController = TextEditingController(text: widget.initialAmount);
-  late final _installmentsController = TextEditingController(text: widget.initialInstallments);
+  late int _installments = int.tryParse(widget.initialInstallments) ?? 1;
 
   @override
   void dispose() {
     _personController.dispose();
     _nameController.dispose();
     _amountController.dispose();
-    _installmentsController.dispose();
     super.dispose();
   }
 
   double? get _parsedAmount => double.tryParse(_amountController.text.replaceAll(',', '.'));
-  int? get _parsedInstallments => int.tryParse(_installmentsController.text);
 
   bool get _isValid =>
       _nameController.text.trim().isNotEmpty &&
       (_parsedAmount ?? 0) > 0 &&
-      (_parsedInstallments ?? 0) >= 1 &&
+      _installments >= 1 &&
       _cardId != null &&
       (!_isOther || _personController.text.trim().isNotEmpty);
 
@@ -88,7 +89,7 @@ class _PurchaseFormFieldsState extends State<PurchaseFormFields> {
     widget.onSubmit(PurchaseFormValues(
       name: _nameController.text.trim(),
       amount: _parsedAmount!,
-      installments: _parsedInstallments!,
+      installments: _installments,
       isOther: _isOther,
       person: _isOther ? _personController.text.trim() : '',
       cardId: _cardId!,
@@ -98,12 +99,11 @@ class _PurchaseFormFieldsState extends State<PurchaseFormFields> {
 
   @override
   Widget build(BuildContext context) {
-    final monthLabel = formatMonthLabel(currentAbsoluteMonth() + _startOffset);
     final scheme = Theme.of(context).colorScheme;
     final palette = context.palette;
 
-    // Softer, whiter input look used only in this form: light border that
-    // turns blue on focus, instead of the app-wide input theme.
+    // Campos brancos com borda clara que escurece no foco, só neste
+    // formulário — o tema geral usa campo cinza.
     final fieldFill = palette.softSurface;
     final fieldBorder = palette.softBorder;
 
@@ -113,9 +113,39 @@ class _PurchaseFormFieldsState extends State<PurchaseFormFields> {
       children: [
         FormSectionCard(
           child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              AmountHero(
+                controller: _amountController,
+                amount: _parsedAmount,
+                installments: _installments,
+                onChanged: (_) => setState(() {}),
+              ),
+              const SizedBox(height: AppSpacing.lg),
+              InstallmentPicker(
+                value: _installments,
+                onChanged: (value) => setState(() => _installments = value),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: AppSpacing.md),
+        FormSectionCard(
+          child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
             children: [
+              AppTextField(
+                label: _isOther ? 'Descrição da compra' : 'Item ou conta',
+                icon: Icons.local_offer_outlined,
+                controller: _nameController,
+                hintText: 'Ex: Notebook Dell',
+                fillColor: fieldFill,
+                borderColor: fieldBorder,
+                focusedBorderColor: scheme.primary,
+                onChanged: (_) => setState(() {}),
+              ),
+              const SizedBox(height: AppSpacing.lg),
               const SectionLabel('Quem comprou'),
               const SizedBox(height: AppSpacing.sm),
               SegmentedChoice<bool>(
@@ -140,120 +170,7 @@ class _PurchaseFormFieldsState extends State<PurchaseFormFields> {
             ],
           ),
         ),
-        const SizedBox(height: AppSpacing.lg),
-        FormSectionCard(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              SectionLabel(
-                'Detalhes da compra',
-                icon: Icons.local_offer_outlined,
-                iconColor: scheme.primary,
-              ),
-              const SizedBox(height: AppSpacing.sm),
-              AppTextField(
-                label: _isOther ? 'Descrição da compra' : 'Item ou conta',
-                controller: _nameController,
-                hintText: 'Ex: Notebook Dell',
-                fillColor: fieldFill,
-                borderColor: fieldBorder,
-                focusedBorderColor: scheme.primary,
-                onChanged: (_) => setState(() {}),
-              ),
-              const SizedBox(height: AppSpacing.lg),
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(
-                    child: AppTextField(
-                      label: 'Valor da parcela',
-                      icon: Icons.attach_money,
-                      prefixText: 'R\$ ',
-                      controller: _amountController,
-                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                      hintText: '0,00',
-                      fillColor: fieldFill,
-                      borderColor: fieldBorder,
-                      focusedBorderColor: scheme.primary,
-                      onChanged: (_) => setState(() {}),
-                    ),
-                  ),
-                  const SizedBox(width: AppSpacing.md),
-                  Expanded(
-                    child: AppTextField(
-                      label: 'Nº de parcelas',
-                      icon: Icons.format_list_numbered,
-                      controller: _installmentsController,
-                      keyboardType: TextInputType.number,
-                      hintText: '1',
-                      fillColor: fieldFill,
-                      borderColor: fieldBorder,
-                      focusedBorderColor: scheme.primary,
-                      onChanged: (_) => setState(() {}),
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: AppSpacing.lg),
-        FormSectionCard(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const SectionLabel('Quando começa'),
-              const SizedBox(height: AppSpacing.sm),
-              Container(
-                height: 48,
-                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
-                decoration: BoxDecoration(
-                  color: fieldFill,
-                  borderRadius: BorderRadius.circular(AppRadius.md),
-                  border: Border.all(color: fieldBorder),
-                ),
-                child: Row(
-                  children: [
-                    IconButton(
-                      onPressed: () => setState(() => _startOffset -= 1),
-                      icon: const Icon(Icons.chevron_left),
-                      visualDensity: VisualDensity.compact,
-                      constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
-                      padding: EdgeInsets.zero,
-                    ),
-                    Expanded(
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(Icons.calendar_today_outlined, size: 16, color: scheme.onSurfaceVariant),
-                          const SizedBox(width: AppSpacing.sm),
-                          Flexible(
-                            child: Text(
-                              monthLabel,
-                              overflow: TextOverflow.ellipsis,
-                              maxLines: 1,
-                              style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    IconButton(
-                      onPressed: () => setState(() => _startOffset += 1),
-                      icon: const Icon(Icons.chevron_right),
-                      visualDensity: VisualDensity.compact,
-                      constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
-                      padding: EdgeInsets.zero,
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: AppSpacing.lg),
+        const SizedBox(height: AppSpacing.md),
         FormSectionCard(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -269,6 +186,17 @@ class _PurchaseFormFieldsState extends State<PurchaseFormFields> {
                 cards: widget.cards,
                 selectedId: _cardId,
                 onSelect: (id) => setState(() => _cardId = id),
+              ),
+              const SizedBox(height: AppSpacing.lg),
+              const SectionLabel('Primeira parcela'),
+              const SizedBox(height: AppSpacing.sm),
+              // Mesmo seletor das telas de mês: o formulário navega entre
+              // meses do jeito que o resto do app já ensinou.
+              MonthSelector(
+                offset: _startOffset,
+                currentAbs: currentAbsoluteMonth(),
+                onChanged: (value) => setState(() => _startOffset = value),
+                color: palette.trackSurface,
               ),
             ],
           ),

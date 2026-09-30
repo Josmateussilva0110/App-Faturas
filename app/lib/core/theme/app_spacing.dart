@@ -31,10 +31,10 @@ class AppRadius {
   static const double sm = 8;
 
   /// Padrão: cards de lista, campos, botões, toast.
-  static const double md = 14;
+  static const double md = 18;
 
   /// Superfícies grandes: diálogos, card primário, seletor segmentado.
-  static const double lg = 20;
+  static const double lg = 24;
 
   /// Cápsula — o valor é só grande o bastante para arredondar por completo.
   static const double pill = 999;

@@ -312,7 +312,6 @@ class _DepositScreenState extends State<DepositScreen> {
                     kicker: 'Guardar',
                     value: formatMoney(guardar),
                     meta: monthLabel,
-                    icon: Icons.savings_outlined,
                     valueFontSize: 22,
                     centered: true,
                     negative: guardar < 0,

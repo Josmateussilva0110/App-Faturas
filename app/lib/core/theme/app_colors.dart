@@ -6,8 +6,10 @@ import 'package:flutter/material.dart';
 class AppColors {
   const AppColors._();
 
-  /// Accent seed color used to generate the whole Material color scheme.
-  static const Color seed = Color(0xFF297CEF);
+  /// Semente do esquema. Grafite, não uma cor: o app é neutro de propósito
+  /// e a cor fica para o que carrega significado — cartões, pessoas,
+  /// categorias e o gráfico.
+  static const Color seed = Color(0xFF2B2B2F);
 
   static Color avatarBackground(int hue, {required bool dark}) {
     return HSLColor.fromAHSL(1, hue.toDouble(), 0.62, dark ? 0.58 : 0.48).toColor();
@@ -58,14 +60,22 @@ class AppColors {
     return dark ? scheme.surfaceContainerHigh : Colors.white;
   }
 
+  // ── Card de destaque ────────────────────────────────────────────────
+  // Escuro nos dois temas: é ele que dá identidade à Home. No tema escuro
+  // fica um degrau acima da página, senão some.
+
+  static const Color heroLight = Color(0xFF1E1E21);
+  static const Color heroDark = Color(0xFF26262A);
+  static const Color onHero = Colors.white;
+
   /// Borda desses mesmos elementos.
   static Color softBorder(ColorScheme scheme, {required bool dark}) {
-    return dark ? scheme.outlineVariant : const Color(0xFFE2E8F0);
+    return dark ? scheme.outlineVariant : const Color(0xFFECECEF);
   }
 
   /// Trilho de fundo do seletor segmentado.
   static Color trackSurface(ColorScheme scheme, {required bool dark}) {
-    return dark ? scheme.surfaceContainerHighest : const Color(0xFFF0F1F5);
+    return dark ? scheme.surfaceContainerHighest : const Color(0xFFEDEDF0);
   }
 
   /// Destaque do valor quando o gasto passa do limite, sobre o card

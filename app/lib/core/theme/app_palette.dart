@@ -25,8 +25,8 @@ class AppPalette extends ThemeExtension<AppPalette> {
     return AppPalette(
       dark: dark,
       softSurface: dark ? scheme.surfaceContainerHigh : Colors.white,
-      softBorder: dark ? scheme.outlineVariant : const Color(0xFFE2E8F0),
-      trackSurface: dark ? scheme.surfaceContainerHighest : const Color(0xFFF0F1F5),
+      softBorder: dark ? scheme.outlineVariant : const Color(0xFFECECEF),
+      trackSurface: dark ? scheme.surfaceContainerHighest : const Color(0xFFEDEDF0),
     );
   }
 
@@ -78,19 +78,25 @@ class AppPalette extends ThemeExtension<AppPalette> {
           ),
         ];
 
-  // ── Sobre o card primário ───────────────────────────────────────────
-  // O primário é azul escuro no tema claro e azul claro no escuro, então o
-  // aviso precisa inverter junto: rosa/âmbar claros num, tons fundos no outro.
+  // ── Card de destaque ────────────────────────────────────────────────
+  // Escuro nos dois temas (ver [AppColors.heroLight]), então os avisos
+  // sobre ele não precisam inverter com o tema: tons claros sempre.
+
+  /// Fundo do card de destaque (total do mês, saldo a guardar).
+  Color get hero => dark ? AppColors.heroDark : AppColors.heroLight;
+
+  /// Texto e ícones sobre [hero].
+  Color get onHero => AppColors.onHero;
 
   /// Meta de gastos perto do limite.
-  Color get nearLimitOnPrimary => dark ? const Color(0xFF6B4000) : const Color(0xFFFFD68A);
+  Color get nearLimitOnHero => const Color(0xFFFFD68A);
 
   /// Meta de gastos estourada.
-  Color get overLimitOnPrimary => dark ? const Color(0xFF93000A) : AppColors.overLimitOnPrimary;
+  Color get overLimitOnHero => AppColors.overLimitOnPrimary;
 
-  /// Ponta final do degradê dos cards de destaque, um pouco mais escura que
-  /// [base]. Sutil de propósito: é profundidade, não uma segunda cor.
-  Color heroGradientEnd(Color base) => Color.lerp(base, Colors.black, dark ? 0.08 : 0.18)!;
+  /// Ponta final do degradê dos cards de destaque. Aqui clareia em vez de
+  /// escurecer: o fundo já é quase preto, e profundidade nele é luz.
+  Color heroGradientEnd(Color base) => Color.lerp(base, Colors.white, 0.08)!;
 
   @override
   AppPalette copyWith({

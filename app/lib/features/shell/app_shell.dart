@@ -5,10 +5,10 @@ import '../home/home_screen.dart';
 import '../monthly/monthly_screen.dart';
 import '../people/people_screen.dart';
 import '../profile/profile_screen.dart';
-import '../purchase_form/add_purchase_screen.dart';
+import 'widgets/floating_nav_bar.dart';
 
-/// Bottom-navigation shell holding the app's five tabs. The "new purchase"
-/// FAB only appears on the Home tab, matching the design prototype.
+/// Bottom-navigation shell holding the app's five tabs. "Nova compra" fica
+/// no card da Home, não num FAB aqui.
 class AppShell extends StatefulWidget {
   const AppShell({super.key});
 
@@ -31,38 +31,19 @@ class _AppShellState extends State<AppShell> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: IndexedStack(index: _index, children: _tabs),
-      // Só a Home tem FAB aqui; Cartões traz o seu próprio, porque o que
-      // ele cria é outra coisa.
-      floatingActionButton: _index == 0
-          ? FloatingActionButton(
-              onPressed: () => Navigator.of(context).push(
-                MaterialPageRoute<void>(builder: (_) => const AddPurchaseScreen()),
-              ),
-              // O IndexedStack mantém todas as abas vivas, então este FAB e
-              // o de Cartões existem ao mesmo tempo na mesma rota — sem tags
-              // distintas, o Hero do Material aborta com colisão.
-              heroTag: 'fab-purchase',
-              tooltip: 'Nova compra',
-              child: const Icon(Icons.add),
-            )
-          : null,
-      bottomNavigationBar: NavigationBar(
+      // O corpo passa por trás da barra: ela flutua, e o fundo da página
+      // aparece em volta da pílula. O Scaffold soma a altura da barra ao
+      // padding do corpo, então o SafeArea das telas já desvia dela.
+      extendBody: true,
+      bottomNavigationBar: FloatingNavBar(
         selectedIndex: _index,
-        onDestinationSelected: (value) => setState(() => _index = value),
+        onSelected: (value) => setState(() => _index = value),
         destinations: const [
-          NavigationDestination(icon: Icon(Icons.home_outlined), selectedIcon: Icon(Icons.home), label: 'Início'),
-          NavigationDestination(
-            icon: Icon(Icons.calendar_month_outlined),
-            selectedIcon: Icon(Icons.calendar_month),
-            label: 'Meses',
-          ),
-          NavigationDestination(icon: Icon(Icons.people_outline), selectedIcon: Icon(Icons.people), label: 'Pessoas'),
-          NavigationDestination(
-            icon: Icon(Icons.credit_card_outlined),
-            selectedIcon: Icon(Icons.credit_card),
-            label: 'Cartões',
-          ),
-          NavigationDestination(icon: Icon(Icons.person_outline), selectedIcon: Icon(Icons.person), label: 'Perfil'),
+          (icon: Icons.home_outlined, selectedIcon: Icons.home, label: 'Início'),
+          (icon: Icons.calendar_month_outlined, selectedIcon: Icons.calendar_month, label: 'Meses'),
+          (icon: Icons.people_outline, selectedIcon: Icons.people, label: 'Pessoas'),
+          (icon: Icons.credit_card_outlined, selectedIcon: Icons.credit_card, label: 'Cartões'),
+          (icon: Icons.person_outline, selectedIcon: Icons.person, label: 'Perfil'),
         ],
       ),
     );

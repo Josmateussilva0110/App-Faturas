@@ -31,7 +31,7 @@ class StatementCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final palette = context.palette;
-    final style = _StatementStyle.of(check.status, scheme: scheme, palette: palette);
+    final style = StatementStyle.of(check.status, scheme: scheme, palette: palette);
     final difference = check.difference;
     final detail = style.detail(check);
 
@@ -117,8 +117,10 @@ class StatementCard extends StatelessWidget {
   }
 }
 
-class _StatementStyle {
-  const _StatementStyle({
+/// Ícone, cor e textos de cada [StatementStatus]. Público porque a carteira
+/// da conferência pinta os cartões com a mesma cor do card de detalhe.
+class StatementStyle {
+  const StatementStyle({
     required this.icon,
     required this.color,
     required this.label,
@@ -137,14 +139,14 @@ class _StatementStyle {
   /// porque juntas viravam um bloco de texto que ninguém lia até o fim.
   final String? Function(StatementCheck check) detail;
 
-  factory _StatementStyle.of(
+  factory StatementStyle.of(
     StatementStatus status, {
     required ColorScheme scheme,
     required AppPalette palette,
   }) {
     switch (status) {
       case StatementStatus.matched:
-        return _StatementStyle(
+        return StatementStyle(
           icon: Icons.check_circle_outline,
           color: palette.iconTint(AppColors.hueSavings),
           label: 'Confere',
@@ -160,7 +162,7 @@ class _StatementStyle {
           },
         );
       case StatementStatus.missing:
-        return _StatementStyle(
+        return StatementStyle(
           icon: Icons.error_outline,
           color: palette.iconTint(AppColors.hueWarning),
           label: 'Falta lançar',
@@ -169,7 +171,7 @@ class _StatementStyle {
           detail: (_) => null,
         );
       case StatementStatus.extra:
-        return _StatementStyle(
+        return StatementStyle(
           icon: Icons.info_outline,
           color: scheme.primary,
           label: 'Registrado a mais',
@@ -177,7 +179,7 @@ class _StatementStyle {
           detail: (_) => 'Ela pode não ter fechado, ou há compra repetida.',
         );
       case StatementStatus.unset:
-        return _StatementStyle(
+        return StatementStyle(
           icon: Icons.receipt_long_outlined,
           color: scheme.onSurfaceVariant,
           label: 'Informar fatura',

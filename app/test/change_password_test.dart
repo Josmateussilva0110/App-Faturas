@@ -35,7 +35,7 @@ Future<void> _signIn(WidgetTester tester) async {
 }
 
 Future<void> _openChangePassword(WidgetTester tester) async {
-  await tester.tap(find.text('Perfil'));
+  await tester.tap(find.byTooltip('Perfil'));
   await tester.pumpAndSettle();
   await tester.tap(find.text('Alterar senha'));
   await tester.pumpAndSettle();
@@ -178,9 +178,8 @@ void main() {
     // Sem `current_password`: o backend aceita a troca sem ela nesse caso.
     expect((sent.single.data as Map).containsKey('current_password'), isFalse);
 
-    // E o app abre. `findsWidgets` porque "Início" aparece duas vezes ali:
-    // o título da AppBar e o rótulo da aba.
-    expect(find.text('Início'), findsWidgets);
+    // E o app abre, com a aba Início selecionada (só ela mostra o nome).
+    expect(find.text('Início'), findsOneWidget);
 
     await tester.pump(const Duration(seconds: 3));
     await tester.pumpAndSettle();

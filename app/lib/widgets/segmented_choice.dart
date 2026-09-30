@@ -44,8 +44,8 @@ class SegmentedChoice<T> extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final trackColor = context.palette.trackSurface;
-    final outerRadius = BorderRadius.circular(AppRadius.lg);
-    final innerRadius = BorderRadius.circular(AppRadius.md);
+    final outerRadius = BorderRadius.circular(AppRadius.pill);
+    final innerRadius = BorderRadius.circular(AppRadius.pill);
 
     return Container(
       width: expand ? double.infinity : null,
@@ -110,7 +110,7 @@ class SegmentedChoice<T> extends StatelessWidget {
                     maxLines: 1,
                     style: TextStyle(
                       fontSize: fontSize,
-                      fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+                      fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
                       color: foreground,
                     ),
                   ),

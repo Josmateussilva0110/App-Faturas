@@ -10,16 +10,25 @@ import '../../state/app_state.dart';
 import '../../widgets/empty_state.dart';
 import '../../widgets/month_selector.dart';
 import '../../widgets/money_entry_dialog.dart';
-import '../../widgets/purchase_tile.dart';
+import '../../widgets/purchase_list_card.dart';
 import '../../widgets/section_label.dart';
-import '../../widgets/total_card.dart';
+import '../../widgets/card_split_bar.dart';
+import '../../widgets/summary_block.dart';
 import '../purchase_form/edit_purchase_dialog.dart';
-import 'widgets/statement_card.dart';
+import 'widgets/month_overview_card.dart';
+import 'widgets/statement_wallet.dart';
 
 /// The "Meses" tab: browse any month (past or future) to see which
 /// installments fall on it.
 class MonthlyScreen extends StatelessWidget {
   const MonthlyScreen({super.key});
+
+  /// A curva mostra [_chartMonths] meses, com o aberto na posição
+  /// [_chartBefore]: dá para ver de onde veio e para onde vai.
+  static const _chartMonths = 6;
+
+  /// Precisa ser ao menos 1: o mês anterior da comparação sai da curva.
+  static const _chartBefore = 3;
 
   /// Abre o valor da fatura daquele cartão/mês. "Limpar" apaga a linha, o que
   /// devolve o card ao estado "Informar fatura".
@@ -56,6 +65,10 @@ class MonthlyScreen extends StatelessWidget {
     final appState = context.watch<AppState>();
     final entries = appState.monthlyEntries;
     final checks = appState.monthlyStatementChecks;
+    // A curva já calcula o mês aberto e o anterior; os totais saem dela em
+    // vez de percorrer as compras de novo.
+    final chart = appState.totalsFrom(appState.monthOffset - _chartBefore, _chartMonths);
+    final total = chart[_chartBefore];
 
     return Scaffold(
       appBar: AppBar(title: const Text('Meses')),
@@ -78,11 +91,22 @@ class MonthlyScreen extends StatelessWidget {
                 onChanged: (value) => context.read<AppState>().setMonthOffset(value),
               ),
               const SizedBox(height: AppSpacing.lg),
-              TotalCard(
-                kicker: 'Total do mês',
-                value: formatMoney(appState.monthlyTotal),
+              MonthOverviewCard(
+                total: total,
+                previousTotal: chart[_chartBefore - 1],
                 meta: entries.length == 1 ? '1 parcela' : '${entries.length} parcelas',
-                icon: Icons.receipt_long_outlined,
+                chartTotals: chart,
+                chartFirstMonthAbs: appState.currentAbs + appState.monthOffset - _chartBefore,
+                chartHighlight: _chartBefore,
+              ),
+              const SizedBox(height: AppSpacing.md),
+              SummaryBlock(
+                title: 'Por cartão',
+                child: CardSplitBar(
+                  shares: appState.cardSharesFor(appState.monthOffset),
+                  total: total,
+                  fullLegend: true,
+                ),
               ),
               if (checks.isNotEmpty) ...[
                 const SizedBox(height: AppSpacing.xl),
@@ -92,40 +116,24 @@ class MonthlyScreen extends StatelessWidget {
                   iconColor: context.palette.iconTint(AppColors.hueCards),
                 ),
                 const SizedBox(height: AppSpacing.md),
-                // O respiro fica *entre* os cards, não depois de cada um: com
-                // um SizedBox por item, o último somava com o espaço de seção
-                // e a distância até "Parcelas do mês" saía maior que as outras.
-                for (var i = 0; i < checks.length; i++) ...[
-                  if (i > 0) const SizedBox(height: AppSpacing.sm),
-                  StatementCard(check: checks[i], onTap: () => _editStatement(context, checks[i])),
-                ],
+                StatementWallet(checks: checks, onTap: (check) => _editStatement(context, check)),
               ],
-              const SizedBox(height: AppSpacing.xl),
-              SectionLabel(
-                'Parcelas do mês',
-                icon: Icons.receipt_long_outlined,
-                iconColor: Theme.of(context).colorScheme.primary,
-              ),
-              const SizedBox(height: AppSpacing.md),
+              const SizedBox(height: AppSpacing.lg),
               if (appState.loadError != null)
                 EmptyState.error(
                   message: appState.loadError!,
                   onRetry: () => context.read<AppState>().load(),
                 )
-              else if (entries.isEmpty)
-                const EmptyState(message: 'Nenhuma parcela neste mês.')
               else
-                for (var i = 0; i < entries.length; i++) ...[
-                  if (i > 0) const SizedBox(height: AppSpacing.sm),
-                  PurchaseTile(
-                    purchase: entries[i].purchase,
-                    status: entries[i].status,
-                    cardName: appState.cardName(entries[i].purchase.cardId),
-                    cardHue: appState.cardHue(entries[i].purchase.cardId),
-                    alwaysShowPersonTag: true,
-                    onTap: () => showEditPurchaseDialog(context, entries[i].purchase),
-                  ),
-                ],
+                PurchaseListCard(
+                  title: 'Parcelas do mês',
+                  entries: entries,
+                  emptyMessage: 'Nenhuma parcela neste mês.',
+                  cardName: appState.cardName,
+                  cardHue: appState.cardHue,
+                  alwaysShowPerson: true,
+                  onTap: (purchase) => showEditPurchaseDialog(context, purchase),
+                ),
             ],
           ),
         ),

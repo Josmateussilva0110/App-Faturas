@@ -26,6 +26,17 @@ String formatMonthLabel(int abs) {
   return '${kMonthsPt[mod]} $year';
 }
 
+const List<String> _kWeekdaysPt = ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado', 'Domingo'];
+
+/// "Quarta, 30 set" — a data curta do cabeçalho da Home.
+String formatDayLabel(DateTime date) {
+  final month = kMonthsPt[date.month - 1].substring(0, 3).toLowerCase();
+  return '${_kWeekdaysPt[date.weekday - 1]}, ${date.day} $month';
+}
+
+/// "Set" — o mês de [abs] abreviado, para eixos de gráfico.
+String formatMonthShort(int abs) => kMonthsPt[abs % 12].substring(0, 3);
+
 /// "R\$ 1.234,56" style label, matching pt-BR grouping.
 String formatMoney(num value) {
   final isNegative = value < 0;

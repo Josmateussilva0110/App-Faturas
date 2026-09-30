@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:fatura/data/api/api_client.dart';
 import 'package:fatura/data/api/auth_storage.dart';
 import 'package:fatura/data/api/token_manager.dart';
+import 'package:fatura/features/home/home_screen.dart';
 import 'package:fatura/main.dart';
 import 'package:fatura/widgets/empty_state.dart';
 
@@ -38,6 +39,16 @@ ResponseBody _listsDown(RequestOptions options) {
   return defaultHandler(options);
 }
 
+/// A lista da Home é preguiçosa: o que fica abaixo do gráfico só existe na
+/// árvore depois de rolar até lá.
+Future<void> _scrollHomeTo(WidgetTester tester, Finder target) async {
+  await tester.scrollUntilVisible(
+    target,
+    200,
+    scrollable: find.descendant(of: find.byType(HomeScreen), matching: find.byType(Scrollable)).first,
+  );
+}
+
 void main() {
   setUp(() {
     tokenManager.clearTokens();
@@ -55,6 +66,7 @@ void main() {
     await _signIn(tester);
 
     // A mensagem do servidor, não a frase de lista vazia.
+    await _scrollHomeTo(tester, find.widgetWithText(OutlinedButton, 'Tentar de novo'));
     expect(find.text('Servidor indisponível.'), findsOneWidget);
     expect(find.text('Nenhuma compra ativa este mês.'), findsNothing);
     expect(find.widgetWithText(OutlinedButton, 'Tentar de novo'), findsOneWidget);
@@ -62,6 +74,9 @@ void main() {
     // O retry busca de novo — e, com o servidor de volta, a tela se recupera
     // sozinha, sem precisar reabrir o app.
     api.httpClientAdapter = FakeAdapter(defaultHandler);
+    // O toast do erro fica sobre o fim da lista, justo onde o botão cai.
+    await tester.pump(const Duration(seconds: 4));
+    await tester.pumpAndSettle();
     await tester.tap(find.widgetWithText(OutlinedButton, 'Tentar de novo'));
     await tester.pumpAndSettle();
 
@@ -84,6 +99,7 @@ void main() {
     await _signIn(tester);
 
     // Vazio de verdade: sem botão de retry, que aqui não teria o que corrigir.
+    await _scrollHomeTo(tester, find.text('Nenhuma compra ativa este mês.'));
     expect(find.text('Nenhuma compra ativa este mês.'), findsOneWidget);
     expect(find.widgetWithText(OutlinedButton, 'Tentar de novo'), findsNothing);
 
@@ -102,7 +118,7 @@ void main() {
     await _pumpApp(tester);
     await _signIn(tester);
 
-    await tester.tap(find.byType(FloatingActionButton));
+    await tester.tap(find.text('Nova compra'));
     await tester.pumpAndSettle();
 
     // Antes a seção "Pagamento" ficava em branco e o botão nunca habilitava,

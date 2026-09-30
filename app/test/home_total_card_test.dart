@@ -46,7 +46,7 @@ void main() {
   testWidgets('o mês vira pílula e a contagem fica sob o valor', (tester) async {
     await _openHomeWithLimit(tester, null);
 
-    expect(find.text('TOTAL DO MÊS'), findsOneWidget);
+    expect(find.text('Total do mês'), findsOneWidget);
     expect(find.text(formatMonthLabel(currentAbsoluteMonth())), findsOneWidget);
     expect(find.text('1 compra ativa'), findsOneWidget);
   });

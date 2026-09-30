@@ -2,6 +2,7 @@ import '../../../widgets/empty_state.dart';
 import '../../cards/cards_screen.dart';
 import 'package:flutter/material.dart';
 
+import '../../../core/theme/app_palette.dart';
 import '../../../models/card_model.dart';
 
 /// Row of selectable chips for picking which card a purchase was made on.
@@ -45,13 +46,17 @@ class CardChoiceChips extends StatelessWidget {
       children: [
         for (final card in cards)
           ChoiceChip(
+            avatar: CircleAvatar(backgroundColor: context.palette.avatarBackground(card.resolvedHue)),
             label: Text(card.name),
             selected: card.id == selectedId,
             onSelected: (_) => onSelect(card.id),
-            selectedColor: scheme.primaryContainer,
+            showCheckmark: false,
+            shape: const StadiumBorder(),
+            backgroundColor: context.palette.trackSurface,
+            selectedColor: scheme.primary,
             labelStyle: TextStyle(
-              fontWeight: FontWeight.w700,
-              color: card.id == selectedId ? scheme.onPrimaryContainer : scheme.onSurface,
+              fontWeight: FontWeight.w600,
+              color: card.id == selectedId ? scheme.onPrimary : scheme.onSurface,
             ),
             side: BorderSide(color: scheme.outlineVariant),
           ),

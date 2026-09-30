@@ -22,11 +22,11 @@ class AppTypography extends ThemeExtension<AppTypography> {
 
   factory AppTypography.of(ColorScheme scheme) {
     return AppTypography(
-      hero: const TextStyle(fontSize: 30, fontWeight: FontWeight.w800),
-      money: const TextStyle(fontSize: 19, fontWeight: FontWeight.w800),
-      title: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
+      hero: const TextStyle(fontSize: 34, fontWeight: FontWeight.w700, letterSpacing: -0.8),
+      money: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700, letterSpacing: -0.2),
+      title: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
       body: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
-      label: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
+      label: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
       field: TextStyle(fontSize: 12, color: scheme.onSurfaceVariant),
       caption: TextStyle(fontSize: 11, color: scheme.onSurfaceVariant),
     );

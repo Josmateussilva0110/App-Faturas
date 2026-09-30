@@ -49,6 +49,7 @@ dependencies:
 
   # Keeps the session (refresh token) on the device between launches
   flutter_secure_storage: ^9.2.2
+  fl_chart: ^1.2.0
 
 dev_dependencies:
   flutter_test:

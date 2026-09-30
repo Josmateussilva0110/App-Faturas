@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:fatura/data/api/api_client.dart';
 import 'package:fatura/data/api/auth_storage.dart';
 import 'package:fatura/data/api/token_manager.dart';
+import 'package:fatura/features/monthly/monthly_screen.dart';
 import 'package:fatura/main.dart';
 
 import 'support/fake_api.dart';
@@ -51,6 +52,17 @@ Future<void> _signIn(WidgetTester tester) async {
   await tester.pumpAndSettle();
 }
 
+/// Meses abre com a visão geral e o gráfico; a conferência fica abaixo da
+/// primeira dobra, e a lista preguiçosa só a monta depois de rolar.
+Future<void> _scrollMonthlyTo(WidgetTester tester, Finder target) async {
+  await tester.scrollUntilVisible(
+    target,
+    200,
+    scrollable: find.descendant(of: find.byType(MonthlyScreen), matching: find.byType(Scrollable)).first,
+  );
+  await tester.pumpAndSettle();
+}
+
 void main() {
   setUp(() {
     tokenManager.clearTokens();
@@ -65,7 +77,7 @@ void main() {
     await _pumpApp(tester);
     await _signIn(tester);
 
-    await tester.tap(find.byTooltip('Nova compra'));
+    await tester.tap(find.text('Nova compra'));
     await tester.pumpAndSettle();
 
     final submit = find.widgetWithText(FilledButton, 'Salvar compra');
@@ -92,7 +104,7 @@ void main() {
     expect(find.text('Crédito no cartão'), findsOneWidget);
     expect(find.text('Saldo após o cartão'), findsOneWidget);
 
-    final guardar = find.text('GUARDAR');
+    final guardar = find.text('Guardar');
     await tester.dragUntilVisible(guardar, find.byType(ListView), const Offset(0, -200));
     await tester.pumpAndSettle();
 
@@ -106,15 +118,17 @@ void main() {
     await _pumpApp(tester);
     await _signIn(tester);
 
-    await tester.tap(find.text('Meses'));
+    await tester.tap(find.byTooltip('Meses'));
     await tester.pumpAndSettle();
 
     // O redesign deu mais respiro aos cards e aumentou a tipografia. Num
     // aparelho de 360px isso é o que estoura primeiro — e o teste falha
     // sozinho se qualquer RenderFlex passar da largura, porque o
     // WidgetTester trata o overflow como exceção não esperada.
+    await _scrollMonthlyTo(tester, find.text('Conferência da fatura'));
     expect(find.text('Conferência da fatura'), findsOneWidget);
-    expect(find.text('Confere'), findsOneWidget);
+    await _scrollMonthlyTo(tester, find.text('Bateu exatamente com a fatura.'));
+    expect(find.text('Confere'), findsNWidgets(2));
 
     // A lista só constrói o que está no viewport, então o resto da tela só
     // existe depois de rolar — que é também o que exercita as linhas de
@@ -138,11 +152,11 @@ void main() {
     // botões disputando 360px. É onde um RenderFlex estoura primeiro, e o
     // WidgetTester trata overflow como exceção não esperada, então basta
     // renderizar para o teste valer.
-    await tester.tap(find.text('Pessoas'));
+    await tester.tap(find.byTooltip('Pessoas'));
     await tester.pumpAndSettle();
     expect(find.text('Gastos por pessoa'), findsOneWidget);
 
-    await tester.tap(find.text('Cartões'));
+    await tester.tap(find.byTooltip('Cartões'));
     await tester.pumpAndSettle();
     expect(find.text('Meus cartões'), findsOneWidget);
     expect(find.text('Nubank'), findsOneWidget);

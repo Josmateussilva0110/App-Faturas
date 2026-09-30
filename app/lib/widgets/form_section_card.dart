@@ -5,8 +5,7 @@ import '../core/theme/app_spacing.dart';
 
 /// White card used to visually group one section of a form (e.g. the "Nova
 /// compra" screen's "Detalhes da compra", "Quando começa" and "Pagamento"
-/// blocks) instead of thin dividers cutting across the screen. Sits best on
-/// a slightly gray/off-white page background so the card reads as raised.
+/// blocks) instead of thin dividers cutting across the screen.
 class FormSectionCard extends StatelessWidget {
   const FormSectionCard({super.key, required this.child});
 
@@ -22,10 +21,9 @@ class FormSectionCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: palette.softSurface,
         borderRadius: BorderRadius.circular(AppRadius.lg),
-        // No escuro a sombra some (ver AppPalette.shadowLow) e é a borda que
-        // separa o card do fundo.
+        // Plano como o AppCard: no claro o branco sobre o cinza já separa; no
+        // escuro esse degrau é pequeno e a borda volta.
         border: palette.dark ? Border.all(color: palette.softBorder) : null,
-        boxShadow: palette.shadowLow,
       ),
       child: child,
     );

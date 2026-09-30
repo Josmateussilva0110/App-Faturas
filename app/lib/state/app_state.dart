@@ -23,6 +23,14 @@ class PersonSummary {
   final double total;
 }
 
+/// Fatia de um cartão no total de um mês.
+class CardShare {
+  const CardShare({required this.name, required this.hue, required this.total});
+  final String name;
+  final int hue;
+  final double total;
+}
+
 class ExpenseRow {
   const ExpenseRow({required this.expense, required this.runningBalance});
   final Expense expense;
@@ -347,13 +355,39 @@ class AppState extends ChangeNotifier {
   List<PurchaseEntry> get homeEntries => activePurchases(0);
   double get homeTotal => totalFor(0);
 
-  /// Total falling on [offset] for one card only. The bank bills each card
-  /// separately, so this — not [totalFor] — is what a bill can be checked
-  /// against. Other people's purchases count: the bank charges the whole
-  /// card together, whoever made the purchase.
-  double totalForCard(int offset, String cardId) => activePurchases(offset)
-      .where((e) => e.purchase.cardId == cardId)
-      .fold(0.0, (sum, e) => sum + e.purchase.amount);
+  /// Quanto cada cartão pesa em [offset], do maior para o menor.
+  ///
+  /// Agrupa pelo `cardId` da compra, não pela lista de cartões: compra de
+  /// cartão apagado ainda cai na fatura e precisa entrar na soma, senão as
+  /// fatias não fecham com [totalFor].
+  List<CardShare> cardSharesFor(int offset) {
+    return [
+      for (final entry in totalsByCardFor(offset).entries)
+        CardShare(name: cardName(entry.key), hue: cardHue(entry.key), total: entry.value),
+    ]..sort((a, b) => b.total.compareTo(a.total));
+  }
+
+  /// Total de cada cartão em [offset], numa passada só pelas compras.
+  ///
+  /// O banco cobra cada cartão separado, então é isto — e não [totalFor] —
+  /// que se confere contra uma fatura. Compras de outras pessoas entram: o
+  /// banco cobra o cartão inteiro, seja de quem for a compra. Calculado de
+  /// uma vez porque as listas de cartões pediam um total por linha, e cada
+  /// pedido refazia o filtro e a ordenação de todas as compras.
+  Map<String, double> totalsByCardFor(int offset) {
+    final totals = <String, double>{};
+    for (final e in activePurchases(offset)) {
+      totals[e.purchase.cardId] = (totals[e.purchase.cardId] ?? 0) + e.purchase.amount;
+    }
+    return totals;
+  }
+
+  /// Total de [months] meses seguidos a partir de [startOffset].
+  ///
+  /// Só conta parcelas já lançadas: olhando para a frente a curva tende a
+  /// cair, porque mostra o compromisso que já existe, não uma previsão.
+  List<double> totalsFrom(int startOffset, int months) =>
+      [for (var i = 0; i < months; i++) totalFor(startOffset + i)];
 
   /// Total considering only the user's own purchases for [offset] months
   /// from now — other people's purchases on the card don't count toward the
@@ -421,9 +455,10 @@ class AppState extends ChangeNotifier {
   List<StatementCheck> statementChecksFor(int offset) {
     final target = currentAbs + offset;
     final checks = <StatementCheck>[];
+    final totals = totalsByCardFor(offset);
 
     for (final card in cards) {
-      final registered = totalForCard(offset, card.id);
+      final registered = totals[card.id] ?? 0;
       final statement = statementFor(card.id, target);
       if (registered == 0 && statement == null) continue;
 

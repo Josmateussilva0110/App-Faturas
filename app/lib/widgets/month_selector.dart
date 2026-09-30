@@ -18,7 +18,12 @@ class MonthSelector extends StatelessWidget {
     required this.offset,
     required this.currentAbs,
     required this.onChanged,
+    this.color,
   });
+
+  /// Fundo da pílula. O padrão é branco sobre a página; dentro de um card
+  /// branco passe um tom de trilho, senão o seletor some.
+  final Color? color;
 
   final int offset;
   final int currentAbs;
@@ -30,12 +35,12 @@ class MonthSelector extends StatelessWidget {
     final palette = context.palette;
 
     return Container(
-      height: 44,
+      height: 48,
       padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
       decoration: BoxDecoration(
-        color: palette.softSurface,
-        borderRadius: BorderRadius.circular(AppRadius.md),
-        border: Border.all(color: palette.softBorder),
+        color: color ?? palette.softSurface,
+        borderRadius: BorderRadius.circular(AppRadius.pill),
+        border: palette.dark ? Border.all(color: palette.softBorder) : null,
       ),
       child: Row(
         children: [
@@ -112,7 +117,7 @@ class _TodayChip extends StatelessWidget {
     final palette = context.palette;
     return Material(
       color: palette.trackSurface,
-      borderRadius: BorderRadius.circular(AppRadius.sm),
+      borderRadius: BorderRadius.circular(AppRadius.pill),
       clipBehavior: Clip.antiAlias,
       child: InkWell(
         onTap: onPressed,

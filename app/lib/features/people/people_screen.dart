@@ -1,15 +1,12 @@
-import '../../core/theme/app_palette.dart';
-
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_spacing.dart';
 import '../../core/utils/formatters.dart';
 import '../../state/app_state.dart';
 import '../../widgets/empty_state.dart';
 import '../../widgets/month_selector.dart';
-import '../../widgets/section_label.dart';
+import '../../widgets/grouped_list_card.dart';
 import '../../widgets/total_card.dart';
 import '../share/share_bill_dialog.dart';
 import 'widgets/person_row.dart';
@@ -32,6 +29,7 @@ class _PeopleScreenState extends State<PeopleScreen> {
   Widget build(BuildContext context) {
     final appState = context.watch<AppState>();
     final people = appState.personSummariesFor(_monthOffset);
+    final total = appState.totalFor(_monthOffset);
 
     return Scaffold(
       appBar: AppBar(title: const Text('Pessoas')),
@@ -53,15 +51,8 @@ class _PeopleScreenState extends State<PeopleScreen> {
               const SizedBox(height: AppSpacing.lg),
               TotalCard(
                 kicker: 'Total do mês',
-                value: formatMoney(appState.totalFor(_monthOffset)),
+                value: formatMoney(total),
                 meta: people.length == 1 ? '1 pessoa' : '${people.length} pessoas',
-                icon: Icons.groups_outlined,
-              ),
-              const SizedBox(height: AppSpacing.xl),
-              SectionLabel(
-                'Gastos por pessoa',
-                icon: Icons.people_outline,
-                iconColor: context.palette.iconTint(AppColors.huePeople),
               ),
               const SizedBox(height: AppSpacing.md),
               if (appState.loadError != null)
@@ -69,25 +60,26 @@ class _PeopleScreenState extends State<PeopleScreen> {
                   message: appState.loadError!,
                   onRetry: () => context.read<AppState>().load(),
                 )
-              else if (people.isEmpty)
-                const EmptyState(message: 'Nenhuma compra ativa neste mês.')
               else
-                // Respiro entre as linhas, não depois de cada uma: com um
-                // SizedBox por item, o último somava com o espaço de seção.
-                for (var i = 0; i < people.length; i++) ...[
-                  if (i > 0) const SizedBox(height: AppSpacing.sm),
-                  PersonRow(
-                    label: people[i].label,
-                    total: people[i].total,
-                    onShare: () => showShareBillDialog(
-                      context,
-                      label: people[i].label,
-                      monthAbs: appState.currentAbs + _monthOffset,
-                      rows: appState.transactionsForPersonFor(_monthOffset, people[i].label),
-                      subtotal: people[i].total,
-                    ),
-                  ),
-                ],
+                GroupedListCard(
+                  title: 'Gastos por pessoa',
+                  empty: const EmptyState(message: 'Nenhuma compra ativa neste mês.'),
+                  children: [
+                    for (final person in people)
+                      PersonRow(
+                        label: person.label,
+                        total: person.total,
+                        share: total > 0 ? person.total / total : 0,
+                        onShare: () => showShareBillDialog(
+                          context,
+                          label: person.label,
+                          monthAbs: appState.currentAbs + _monthOffset,
+                          rows: appState.transactionsForPersonFor(_monthOffset, person.label),
+                          subtotal: person.total,
+                        ),
+                      ),
+                  ],
+                ),
             ],
           ),
         ),

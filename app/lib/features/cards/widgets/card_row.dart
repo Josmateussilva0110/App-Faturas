@@ -1,22 +1,23 @@
-import '../../../core/theme/app_palette.dart';
 import 'package:flutter/material.dart';
 
 import '../../../core/theme/app_spacing.dart';
-import '../../../core/theme/app_typography.dart';
-
 import '../../../core/theme/app_colors.dart';
-import '../../../widgets/app_card.dart';
+import '../../../core/theme/app_typography.dart';
+import '../../../core/utils/formatters.dart';
+import '../../../widgets/grouped_list_card.dart';
 import '../../../widgets/avatar_circle.dart';
 import '../../../widgets/confirm_delete_dialog.dart';
 
-/// One row on the Cards screen: a credit-card avatar, the card's name, and
-/// edit/delete buttons. Deleting asks for confirmation via
-/// [showConfirmDeleteDialog].
+/// One row on the Cards screen: a credit-card avatar, the card's name and
+/// this month's total, and edit/delete buttons. Deleting asks for
+/// confirmation via [showConfirmDeleteDialog]. Vive dentro de um
+/// [GroupedListCard].
 class CardRow extends StatelessWidget {
   const CardRow({
     super.key,
     required this.name,
     required this.hue,
+    required this.monthTotal,
     required this.onEdit,
     required this.onDelete,
   });
@@ -25,6 +26,10 @@ class CardRow extends StatelessWidget {
 
   /// Cor do cartão já resolvida — escolhida pelo usuário ou derivada do nome.
   final int hue;
+
+  /// Quanto cai neste cartão no mês corrente.
+  final double monthTotal;
+
   final VoidCallback onEdit;
   final VoidCallback onDelete;
 
@@ -32,21 +37,29 @@ class CardRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
 
-    return AppCard(
-      accentColor: context.palette.avatarBackground(hue),
-      padding: const EdgeInsets.all(AppSpacing.lg),
+    return Padding(
+      padding: GroupedListCard.rowPadding.copyWith(right: AppSpacing.xs),
       child: Row(
         children: [
           AvatarCircle(
             label: name,
             hue: hue,
-            child: const Icon(Icons.credit_card, color: AppColors.avatarForeground, size: 16),
+            size: 40,
+            child: const Icon(Icons.credit_card, color: AppColors.avatarForeground, size: 18),
           ),
           const SizedBox(width: AppSpacing.md),
           Expanded(
-            // Era um TextStyle solto repetindo o token `title` com outro
-            // peso, o tipo de divergência que a escala existe para evitar.
-            child: Text(name, style: context.text.title, overflow: TextOverflow.ellipsis),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(name, style: context.text.title, overflow: TextOverflow.ellipsis),
+                const SizedBox(height: AppSpacing.xxs),
+                Text(
+                  monthTotal > 0 ? '${formatMoney(monthTotal)} este mês' : 'Nada este mês',
+                  style: context.text.caption,
+                ),
+              ],
+            ),
           ),
           // Menores que o padrão do IconButton: são ações de apoio numa
           // linha de uma coisa só, e no tamanho cheio pesavam mais que o

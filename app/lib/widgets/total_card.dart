@@ -3,8 +3,9 @@ import 'package:flutter/material.dart';
 import '../core/theme/app_palette.dart';
 import '../core/theme/app_typography.dart';
 import '../core/theme/app_spacing.dart';
+import 'spending_goal_bar.dart';
 
-/// The accent-colored "kicker + big money value + meta" card used for the
+/// The dark "kicker + big money value + meta" card used for the
 /// monthly total (Home, Monthly, People) and the "Guardar" result (Deposit).
 ///
 /// [centered] switches to a compact, centered presentation (meta as a pill
@@ -24,8 +25,7 @@ class TotalCard extends StatelessWidget {
     required this.value,
     this.meta,
     this.badge,
-    this.icon,
-    this.valueFontSize = 28,
+    this.valueFontSize = 32,
     this.centered = false,
     this.detail,
     this.negative = false,
@@ -34,9 +34,6 @@ class TotalCard extends StatelessWidget {
     this.onTapGoal,
   });
 
-  /// A partir desta fração da meta o card avisa que o limite está perto.
-  static const nearLimitRatio = 0.8;
-
   final String kicker;
   final String value;
   final String? meta;
@@ -44,7 +41,6 @@ class TotalCard extends StatelessWidget {
   /// Pílula no canto superior direito (só no modo alinhado à esquerda).
   final String? badge;
 
-  final IconData? icon;
   final double valueFontSize;
   final bool centered;
 
@@ -66,7 +62,7 @@ class TotalCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    final base = centered && negative ? scheme.error : scheme.primary;
+    final base = centered && negative ? scheme.error : context.palette.hero;
 
     return Container(
       width: double.infinity,
@@ -77,7 +73,7 @@ class TotalCard extends StatelessWidget {
           end: Alignment.bottomRight,
           colors: [base, context.palette.heroGradientEnd(base)],
         ),
-        borderRadius: BorderRadius.circular(centered ? AppRadius.lg : AppRadius.md),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
         boxShadow: context.palette.shadowMedium,
       ),
       child: centered ? _buildCentered(context, scheme) : _buildInline(context, scheme),
@@ -85,7 +81,7 @@ class TotalCard extends StatelessWidget {
   }
 
   Widget _buildCentered(BuildContext context, ColorScheme scheme) {
-    final fg = negative ? scheme.onError : scheme.onPrimary;
+    final fg = negative ? scheme.onError : context.palette.onHero;
 
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -93,18 +89,9 @@ class TotalCard extends StatelessWidget {
         Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            if (icon != null) ...[
-              Icon(icon, size: 13, color: fg.withValues(alpha: 0.8)),
-              const SizedBox(width: AppSpacing.xs),
-            ],
             Text(
-              kicker.toUpperCase(),
-              style: TextStyle(
-                fontSize: 11,
-                letterSpacing: 0.4,
-                fontWeight: FontWeight.w700,
-                color: fg.withValues(alpha: 0.8),
-              ),
+              kicker,
+              style: context.text.field.copyWith(color: fg.withValues(alpha: 0.7)),
             ),
           ],
         ),
@@ -130,27 +117,18 @@ class TotalCard extends StatelessWidget {
   }
 
   Widget _buildInline(BuildContext context, ColorScheme scheme) {
-    final fg = scheme.onPrimary;
+    final fg = context.palette.onHero;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
           children: [
-            if (icon != null) ...[
-              Icon(icon, size: 13, color: fg.withValues(alpha: 0.85)),
-              const SizedBox(width: AppSpacing.xs),
-            ],
             Expanded(
               child: Text(
-                kicker.toUpperCase(),
+                kicker,
                 overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  fontSize: 11,
-                  letterSpacing: 0.4,
-                  fontWeight: FontWeight.w700,
-                  color: fg.withValues(alpha: 0.85),
-                ),
+                style: context.text.field.copyWith(color: fg.withValues(alpha: 0.7)),
               ),
             ),
             if (badge != null) _Pill(label: badge!, color: fg),
@@ -176,7 +154,7 @@ class TotalCard extends StatelessWidget {
         ],
         if (onTapGoal != null) ...[
           const SizedBox(height: AppSpacing.lg),
-          _GoalSection(progress: goalProgress, label: goalLabel, onTap: onTapGoal!, color: fg),
+          SpendingGoalBar(progress: goalProgress, label: goalLabel, onTap: onTapGoal!, color: fg),
         ],
       ],
     );
@@ -205,102 +183,6 @@ class _Pill extends StatelessWidget {
           color: color.withValues(alpha: 0.95),
         ),
       ),
-    );
-  }
-}
-
-/// Barra da meta de gastos com a porcentagem e o quanto resta, ou o convite
-/// para definir uma meta. A área inteira é tocável e abre a edição.
-class _GoalSection extends StatelessWidget {
-  const _GoalSection({
-    required this.progress,
-    required this.label,
-    required this.onTap,
-    required this.color,
-  });
-
-  final double? progress;
-  final String? label;
-  final VoidCallback onTap;
-  final Color color;
-
-  @override
-  Widget build(BuildContext context) {
-    final progress = this.progress;
-
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(AppRadius.xs),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 4),
-        child: progress == null ? _prompt(context) : _bar(context, progress),
-      ),
-    );
-  }
-
-  Widget _prompt(BuildContext context) {
-    return Row(
-      children: [
-        Icon(Icons.add_circle_outline, size: 15, color: color.withValues(alpha: 0.9)),
-        const SizedBox(width: AppSpacing.xs),
-        Text(
-          'Definir meta de gastos',
-          style: context.text.field.copyWith(color: color.withValues(alpha: 0.9)),
-        ),
-      ],
-    );
-  }
-
-  Widget _bar(BuildContext context, double progress) {
-    final palette = context.palette;
-    // Branco enquanto está folgado; âmbar perto do limite; vermelho depois.
-    final tone = progress >= 1
-        ? palette.overLimitOnPrimary
-        : progress >= TotalCard.nearLimitRatio
-            ? palette.nearLimitOnPrimary
-            : color;
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            Expanded(
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(AppRadius.xs),
-                child: LinearProgressIndicator(
-                  value: progress.clamp(0.0, 1.0).toDouble(),
-                  minHeight: 6,
-                  backgroundColor: color.withValues(alpha: 0.25),
-                  color: tone,
-                ),
-              ),
-            ),
-            const SizedBox(width: AppSpacing.sm),
-            Text(
-              '${(progress * 100).round()}%',
-              style: context.text.field.copyWith(color: tone, fontWeight: FontWeight.w700),
-            ),
-          ],
-        ),
-        if (label != null) ...[
-          const SizedBox(height: AppSpacing.xsPlus),
-          Row(
-            children: [
-              Expanded(
-                child: Text(
-                  label!,
-                  style: context.text.caption.copyWith(
-                    color: tone == color ? color.withValues(alpha: 0.9) : tone,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-              Icon(Icons.edit_outlined, size: 14, color: color.withValues(alpha: 0.8)),
-            ],
-          ),
-        ],
-      ],
     );
   }
 }
