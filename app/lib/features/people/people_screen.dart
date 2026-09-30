@@ -82,6 +82,7 @@ class _PeopleScreenState extends State<PeopleScreen> {
                     onShare: () => showShareBillDialog(
                       context,
                       label: people[i].label,
+                      monthAbs: appState.currentAbs + _monthOffset,
                       rows: appState.transactionsForPersonFor(_monthOffset, people[i].label),
                       subtotal: people[i].total,
                     ),

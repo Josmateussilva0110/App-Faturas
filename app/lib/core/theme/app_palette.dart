@@ -78,6 +78,20 @@ class AppPalette extends ThemeExtension<AppPalette> {
           ),
         ];
 
+  // ── Sobre o card primário ───────────────────────────────────────────
+  // O primário é azul escuro no tema claro e azul claro no escuro, então o
+  // aviso precisa inverter junto: rosa/âmbar claros num, tons fundos no outro.
+
+  /// Meta de gastos perto do limite.
+  Color get nearLimitOnPrimary => dark ? const Color(0xFF6B4000) : const Color(0xFFFFD68A);
+
+  /// Meta de gastos estourada.
+  Color get overLimitOnPrimary => dark ? const Color(0xFF93000A) : AppColors.overLimitOnPrimary;
+
+  /// Ponta final do degradê dos cards de destaque, um pouco mais escura que
+  /// [base]. Sutil de propósito: é profundidade, não uma segunda cor.
+  Color heroGradientEnd(Color base) => Color.lerp(base, Colors.black, dark ? 0.08 : 0.18)!;
+
   @override
   AppPalette copyWith({
     bool? dark,

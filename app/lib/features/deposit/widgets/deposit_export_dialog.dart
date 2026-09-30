@@ -24,6 +24,7 @@ Future<void> showDepositExportDialog(
   required double ownTotal,
   required double afterCredit,
   required List<ExpenseRow> expenseRows,
+  required double totalExpenses,
   required double guardar,
 }) {
   return showDialog<void>(
@@ -35,6 +36,7 @@ Future<void> showDepositExportDialog(
       ownTotal: ownTotal,
       afterCredit: afterCredit,
       expenseRows: expenseRows,
+      totalExpenses: totalExpenses,
       guardar: guardar,
     ),
   );
@@ -48,6 +50,7 @@ class _DepositExportDialog extends StatefulWidget {
     required this.ownTotal,
     required this.afterCredit,
     required this.expenseRows,
+    required this.totalExpenses,
     required this.guardar,
   });
 
@@ -57,6 +60,7 @@ class _DepositExportDialog extends StatefulWidget {
   final double ownTotal;
   final double afterCredit;
   final List<ExpenseRow> expenseRows;
+  final double totalExpenses;
   final double guardar;
 
   @override
@@ -79,6 +83,9 @@ class _DepositExportDialogState extends State<_DepositExportDialog> {
     rows.add('Resumo\tSaldo após crédito\t${_num(widget.afterCredit)}');
     for (final row in widget.expenseRows) {
       rows.add('Despesa\t${row.expense.name}\t-${_num(row.expense.value)}');
+    }
+    if (widget.expenseRows.isNotEmpty) {
+      rows.add('Resumo\tTotal despesas\t-${_num(widget.totalExpenses)}');
     }
     rows.add('Resumo\tGuardar\t${_num(widget.guardar)}');
     return rows.join('\n');
@@ -134,6 +141,7 @@ class _DepositExportDialogState extends State<_DepositExportDialog> {
                 ownTotal: widget.ownTotal,
                 afterCredit: widget.afterCredit,
                 expenseRows: widget.expenseRows,
+                totalExpenses: widget.totalExpenses,
                 guardar: widget.guardar,
               ),
             ),
@@ -179,6 +187,7 @@ class _ReceiptCard extends StatelessWidget {
     required this.ownTotal,
     required this.afterCredit,
     required this.expenseRows,
+    required this.totalExpenses,
     required this.guardar,
   });
 
@@ -188,6 +197,7 @@ class _ReceiptCard extends StatelessWidget {
   final double ownTotal;
   final double afterCredit;
   final List<ExpenseRow> expenseRows;
+  final double totalExpenses;
   final double guardar;
 
   static const _accent = Color(0xFF297CEF);
@@ -233,7 +243,17 @@ class _ReceiptCard extends StatelessWidget {
           const Divider(height: 20, color: Color(0xFFE2E8F0)),
           _header('Despesas'),
           for (final row in expenseRows)
-            _line(row.expense.name, '- ${formatMoney(row.expense.value)}'),
+            _line(row.expense.name, formatMoney(row.expense.value)),
+          // Mesmo papel do "Total salários": fecha o bloco com a soma.
+          if (expenseRows.isNotEmpty) ...[
+            const Divider(height: 20, color: Color(0xFFE2E8F0)),
+            _line(
+              'Total despesas',
+              formatMoney(totalExpenses),
+              bold: true,
+              color: const Color(0xFFB3261E),
+            ),
+          ],
           const Divider(height: 20, color: Color(0xFFE2E8F0)),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,

@@ -143,6 +143,7 @@ class _DepositScreenState extends State<DepositScreen> {
     final afterCredit = appState.afterCreditFor(_monthOffset);
     final expenseRows = appState.expenseRowsFor(_monthOffset);
     final guardar = appState.guardarFor(_monthOffset);
+    final savingsRate = appState.savingsRateFor(_monthOffset);
 
     return Scaffold(
       backgroundColor: scheme.surfaceContainerLow,
@@ -160,6 +161,7 @@ class _DepositScreenState extends State<DepositScreen> {
               ownTotal: ownTotal,
               afterCredit: afterCredit,
               expenseRows: expenseRows,
+              totalExpenses: appState.totalExpenses,
               guardar: guardar,
             ),
             icon: const Icon(Icons.ios_share),
@@ -313,6 +315,12 @@ class _DepositScreenState extends State<DepositScreen> {
                     icon: Icons.savings_outlined,
                     valueFontSize: 22,
                     centered: true,
+                    negative: guardar < 0,
+                    detail: savingsRate == null
+                        ? null
+                        : guardar < 0
+                            ? 'Passa do salário'
+                            : '${(savingsRate * 100).round()}% do salário',
                   ),
                 ),
               ),

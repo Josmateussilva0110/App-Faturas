@@ -13,12 +13,13 @@ import '../../widgets/app_text_field.dart';
 Future<void> showShareBillDialog(
   BuildContext context, {
   required String label,
+  required int monthAbs,
   required List<PurchaseEntry> rows,
   required double subtotal,
 }) {
   return showDialog<void>(
     context: context,
-    builder: (_) => ShareBillDialog(label: label, rows: rows, subtotal: subtotal),
+    builder: (_) => ShareBillDialog(label: label, monthAbs: monthAbs, rows: rows, subtotal: subtotal),
   );
 }
 
@@ -26,11 +27,15 @@ class ShareBillDialog extends StatefulWidget {
   const ShareBillDialog({
     super.key,
     required this.label,
+    required this.monthAbs,
     required this.rows,
     required this.subtotal,
   });
 
   final String label;
+
+  /// Mês absoluto da fatura — define o título e o vencimento do texto.
+  final int monthAbs;
   final List<PurchaseEntry> rows;
   final double subtotal;
 
@@ -52,6 +57,7 @@ class _ShareBillDialogState extends State<ShareBillDialog> {
 
   String _shareText(AppState appState) => appState.buildShareText(
     label: widget.label,
+    monthAbs: widget.monthAbs,
     rows: widget.rows,
     subtotal: widget.subtotal,
     discount: _discount,
@@ -87,7 +93,9 @@ class _ShareBillDialogState extends State<ShareBillDialog> {
             ),
             child: Text(
               text,
-              style: const TextStyle(fontFamily: 'monospace', fontSize: 12.5, height: 1.6),
+              // Monoespaçada como o bloco ``` do WhatsApp, para a prévia mostrar
+              // as colunas alinhadas do jeito que a pessoa vai receber.
+              style: const TextStyle(fontFamily: 'monospace', fontSize: 12.5, height: 1.5),
             ),
           ),
           const SizedBox(height: AppSpacing.md),

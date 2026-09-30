@@ -82,7 +82,7 @@ class MonthlyScreen extends StatelessWidget {
                 kicker: 'Total do mês',
                 value: formatMoney(appState.monthlyTotal),
                 meta: entries.length == 1 ? '1 parcela' : '${entries.length} parcelas',
-                icon: Icons.trending_up,
+                icon: Icons.receipt_long_outlined,
               ),
               if (checks.isNotEmpty) ...[
                 const SizedBox(height: AppSpacing.xl),

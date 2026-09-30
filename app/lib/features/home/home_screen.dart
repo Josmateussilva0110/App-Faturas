@@ -28,6 +28,7 @@ class HomeScreen extends StatelessWidget {
     final appState = context.watch<AppState>();
     final entries = appState.homeEntries;
     final goalRatio = appState.spendingGoalRatio;
+    final goalRemaining = appState.spendingGoalRemaining;
     final savingsColor = context.palette.iconTint(AppColors.hueSavings);
 
     return Scaffold(
@@ -47,14 +48,11 @@ class HomeScreen extends StatelessWidget {
               TotalCard(
                 kicker: 'Total do mês',
                 value: formatMoney(appState.homeTotal),
-                meta:
-                    '${formatMonthLabel(appState.currentAbs)} · '
-                    '${entries.length == 1 ? '1 compra ativa' : '${entries.length} compras ativas'}',
-                icon: Icons.trending_up,
+                meta: entries.length == 1 ? '1 compra ativa' : '${entries.length} compras ativas',
+                badge: formatMonthLabel(appState.currentAbs),
+                icon: Icons.receipt_long_outlined,
                 goalProgress: goalRatio,
-                goalLabel: goalRatio == null
-                    ? null
-                    : 'Limite utilizado: ${(goalRatio * 100).round()}%',
+                goalLabel: _goalLabel(goalRatio, goalRemaining, appState.spendingLimit),
                 onTapGoal: () => showSpendingLimitDialog(
                   context,
                   currentLimit: appState.spendingLimit,
@@ -124,4 +122,14 @@ class HomeScreen extends StatelessWidget {
       ),
     );
   }
+}
+
+/// Texto sob a barra da meta: quanto resta enquanto há folga, um aviso perto
+/// do limite e quanto passou depois dele.
+String? _goalLabel(double? ratio, double? remaining, double? limit) {
+  if (ratio == null || remaining == null || limit == null) return null;
+  if (remaining < 0) return 'Passou ${formatMoney(-remaining)} do limite';
+  if (remaining == 0) return 'Limite atingido';
+  if (ratio >= TotalCard.nearLimitRatio) return 'Quase no limite · restam ${formatMoney(remaining)}';
+  return 'Restam ${formatMoney(remaining)} de ${formatMoney(limit)}';
 }

@@ -372,6 +372,15 @@ class AppState extends ChangeNotifier {
     return homeOwnTotal / limit;
   }
 
+  /// Quanto ainda cabe na meta de gastos este mês — negativo quando já
+  /// passou —, ou `null` sem meta. Mesma base de [spendingGoalRatio]: só as
+  /// compras próprias.
+  double? get spendingGoalRemaining {
+    final limit = spendingLimit;
+    if (limit == null || limit <= 0) return null;
+    return limit - homeOwnTotal;
+  }
+
   /// The Monthly screen's active purchases and total, for [monthOffset].
   List<PurchaseEntry> get monthlyEntries => activePurchases(monthOffset);
   double get monthlyTotal => totalFor(monthOffset);
@@ -515,6 +524,11 @@ class AppState extends ChangeNotifier {
 
   double get guardar => guardarFor(0);
 
+  /// Fração do salário que sobra para guardar; nula sem salário lançado,
+  /// já que aí não há do que tirar a porcentagem.
+  double? savingsRateFor(int offset) =>
+      totalSalaries > 0 ? guardarFor(offset) / totalSalaries : null;
+
   Future<void> addSalary(String name, double value) async {
     final created = await _guard(() => _repository.addSalary(name, value));
     if (created == null) return;
@@ -576,8 +590,19 @@ class AppState extends ChangeNotifier {
   }
 
   // ── Share text ───────────────────────────────────────────────────────
+  /// Até quantos caracteres o nome da compra entra na coluna. Mais que isso
+  /// empurra a linha para além da largura de um celular no WhatsApp.
+  static const _shareNameWidth = 14;
+
+  /// Texto da fatura de [label] no mês [monthAbs], no formato do WhatsApp.
+  ///
+  /// Compras e totais vão num bloco ``` porque é o único trecho que o
+  /// WhatsApp mostra em fonte monoespaçada — fora dele a fonte é
+  /// proporcional e nenhum preenchimento com espaços deixa as colunas
+  /// alinhadas. O preço é que `*negrito*` não funciona lá dentro.
   String buildShareText({
     required String label,
+    required int monthAbs,
     required List<PurchaseEntry> rows,
     required double subtotal,
     required double discount,
@@ -586,37 +611,69 @@ class AppState extends ChangeNotifier {
     final now = DateTime.now();
     final dateStr = '${pad2(now.day)}/${pad2(now.month)}/${now.year}';
     final timeStr = '${pad2(now.hour)}:${pad2(now.minute)}';
-    final mod = currentAbs % 12;
-    final year = (currentAbs - mod) ~/ 12;
+    final mod = monthAbs % 12;
+    final year = (monthAbs - mod) ~/ 12;
     final due = '10/${pad2(mod + 1)}/$year';
 
-    final lines = [
+    // Contagem por caractere visível, não por unidade UTF-16: senão um
+    // acento decomposto ou um emoji no nome desalinha a coluna.
+    String cell(String text, int width) {
+      final chars = text.characters;
+      if (chars.length > width) return '${chars.take(width - 1)}…';
+      return text + ' ' * (width - chars.length);
+    }
+
+    final items = [
       for (final e in rows)
-        '  ▸ ${e.purchase.name}: ${formatMoney(e.purchase.amount)}  (${e.status.installmentNumber}/${e.purchase.installments})',
+        (
+          name: e.purchase.name.trim(),
+          value: formatMoney(e.purchase.amount),
+          // À vista não precisa de "1/1".
+          installment: e.purchase.installments > 1
+              ? '${e.status.installmentNumber}/${e.purchase.installments}'
+              : '',
+        ),
     ];
-    const sep = '─────────────────────';
-    final totalLines = discount > 0
-        ? [
-            sep,
-            '🧾 Subtotal:   ${formatMoney(subtotal)}',
-            '🏷 Desconto:  - ${formatMoney(discount)}',
-            sep,
-            '💰 Total:     ${formatMoney(subtotal - discount)}',
-          ]
-        : [sep, '💰 Total:     ${formatMoney(subtotal)}'];
+    final totals = [
+      if (discount > 0) ...[
+        (label: 'Subtotal', value: formatMoney(subtotal)),
+        (label: 'Desconto', value: '-${formatMoney(discount)}'),
+      ],
+      (label: 'Total', value: formatMoney(subtotal - discount)),
+    ];
+
+    final nameWidth = [
+      for (final i in items) i.name.characters.length,
+      for (final t in totals) t.label.length,
+    ].reduce((a, b) => a > b ? a : b).clamp(0, _shareNameWidth);
+    final valueWidth = [
+      for (final i in items) i.value.length,
+      for (final t in totals) t.value.length,
+    ].reduce((a, b) => a > b ? a : b);
+    final installmentWidth = items.fold(0, (w, i) => i.installment.length > w ? i.installment.length : w);
+
+    String line(String name, String value, [String installment = '']) {
+      final base = '${cell(name, nameWidth)}  ${value.padLeft(valueWidth)}';
+      return installmentWidth == 0 ? base : '$base  ${installment.padLeft(installmentWidth)}';
+    }
+
+    final itemLines = [for (final i in items) line(i.name, i.value, i.installment).trimRight()];
+    final totalLines = [for (final t in totals) line(t.label, t.value).trimRight()];
+    final rule = '-' * 14;
 
     return [
-      '💳 FATURA MENSAL',
-      '─────────────────────',
+      '💳 *Fatura · ${formatMonthLabel(monthAbs)}*',
       '👤 $label',
-      '🗓 Gerada em $dateStr às $timeStr',
-      '📅 Vencimento: $due',
+      '📅 Vence em $due',
       '',
-      '📋 Contas do mês:',
-      '',
-      ...lines,
-      '',
+      '*Compras (${rows.length})*',
+      '```',
+      ...itemLines,
+      rule,
       ...totalLines,
+      '```',
+      '',
+      '_Gerada em $dateStr às ${timeStr}_',
     ].join('\n');
   }
 }
