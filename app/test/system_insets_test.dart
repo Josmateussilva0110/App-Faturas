@@ -89,7 +89,7 @@ void main() {
     expect(tester.getRect(submit).bottom, lessThanOrEqualTo(_navBarTop(tester)));
   });
 
-  testWidgets('a barra do sistema não cobre o card "Guardar" do Depositar', (tester) async {
+  testWidgets('Depositar abre no Guardar e a barra do sistema não cobre a última despesa', (tester) async {
     _useSmallScreenWithNavBar(tester);
     await _pumpApp(tester);
     await _signIn(tester);
@@ -97,20 +97,17 @@ void main() {
     await tester.tap(find.text('Depositar'));
     await tester.pumpAndSettle();
 
-    // O resumo abre a tela: os três números empilhados, com o saldo fechando
-    // o bloco. Os rótulos ficam presos aqui porque foram renomeados no
-    // redesign e nada mais os cobria.
-    expect(find.text('Total de salários'), findsOneWidget);
-    expect(find.text('Crédito no cartão'), findsOneWidget);
-    expect(find.text('Saldo após o cartão'), findsOneWidget);
+    // A resposta da tela vem primeiro: o quanto guardar, sem rolar.
+    expect(find.text('Guardar'), findsWidgets);
+    expect(find.text('Para onde vai o salário'), findsOneWidget);
 
-    final guardar = find.text('Guardar');
-    await tester.dragUntilVisible(guardar, find.byType(ListView), const Offset(0, -200));
+    // O fim da tela é a lista de despesas, e o saldo de cada uma é o último
+    // texto — é ele que não pode ficar embaixo da barra do sistema.
+    final remaining = find.textContaining('Saldo restante:');
+    await tester.dragUntilVisible(remaining, find.byType(ListView), const Offset(0, -200));
     await tester.pumpAndSettle();
 
-    expect(find.textContaining('Saldo restante:'), findsWidgets);
-
-    expect(tester.getRect(guardar).bottom, lessThanOrEqualTo(_navBarTop(tester)));
+    expect(tester.getRect(remaining.last).bottom, lessThanOrEqualTo(_navBarTop(tester)));
   });
 
   testWidgets('a aba Meses cabe numa tela estreita sem estourar', (tester) async {

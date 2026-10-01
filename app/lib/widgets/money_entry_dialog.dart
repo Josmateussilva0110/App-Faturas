@@ -7,13 +7,14 @@ import 'app_text_field.dart';
 /// The name/value pair a [showMoneyEntryDialog] returns.
 typedef MoneyEntry = ({String name, double value});
 
-/// "Editar salário" / "Editar despesa" dialog: a name and an amount.
-/// Returns the edited pair, or null if the user cancelled.
+/// "Novo salário" / "Editar despesa" dialog: a name and an amount. Sem
+/// [name] e [value] abre vazio, para criar. Returns the pair, or null if the
+/// user cancelled.
 Future<MoneyEntry?> showMoneyEntryDialog(
   BuildContext context, {
   required String title,
-  required String name,
-  required double value,
+  String name = '',
+  double? value,
 }) async {
   final result = await showDialog<_DialogResult>(
     context: context,

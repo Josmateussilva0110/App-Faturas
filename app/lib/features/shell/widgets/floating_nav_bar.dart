@@ -8,9 +8,8 @@ typedef NavDestination = ({IconData icon, IconData selectedIcon, String label});
 
 /// Barra de abas em pílula, solta do rodapé.
 ///
-/// Só a aba atual mostra o nome: cinco rótulos fixos disputavam a largura e
-/// o ícone já basta para as outras. O nome continua acessível pelo tooltip,
-/// que também é o que o leitor de tela anuncia.
+/// Toda aba mostra ícone e nome: só o ícone obrigava a decorar o que cada
+/// um abre. A aba atual se destaca por uma pílula escura atrás do ícone.
 class FloatingNavBar extends StatelessWidget {
   const FloatingNavBar({
     super.key,
@@ -34,8 +33,8 @@ class FloatingNavBar extends StatelessWidget {
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
         child: Container(
-          height: 64,
-          padding: const EdgeInsets.all(AppSpacing.sm),
+          height: 68,
+          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xs, vertical: AppSpacing.sm),
           decoration: BoxDecoration(
             color: palette.softSurface,
             borderRadius: BorderRadius.circular(AppRadius.pill),
@@ -53,8 +52,6 @@ class FloatingNavBar extends StatelessWidget {
             children: [
               for (var i = 0; i < destinations.length; i++)
                 Expanded(
-                  // A aba atual ganha mais espaço para caber o nome.
-                  flex: i == selectedIndex ? 2 : 1,
                   child: _NavItem(
                     destination: destinations[i],
                     selected: i == selectedIndex,
@@ -85,7 +82,7 @@ class _NavItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final fg = selected ? scheme.onPrimary : scheme.onSurfaceVariant;
+    final iconColor = selected ? scheme.onPrimary : scheme.onSurfaceVariant;
 
     return Tooltip(
       message: destination.label,
@@ -95,36 +92,37 @@ class _NavItem extends StatelessWidget {
         selected: selected,
         label: destination.label,
         excludeSemantics: true,
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
-          curve: Curves.easeOut,
-          decoration: BoxDecoration(
-            color: selected ? scheme.primary : Colors.transparent,
-            borderRadius: BorderRadius.circular(AppRadius.pill),
-          ),
-          child: Material(
-            type: MaterialType.transparency,
-            child: InkWell(
-              onTap: onTap,
-              customBorder: const StadiumBorder(),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(selected ? destination.selectedIcon : destination.icon, size: 22, color: fg),
-                  if (selected) ...[
-                    const SizedBox(width: AppSpacing.xsPlus),
-                    Flexible(
-                      child: Text(
-                        destination.label,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: fg),
-                      ),
-                    ),
-                  ],
-                ],
+        child: InkWell(
+          onTap: onTap,
+          customBorder: const StadiumBorder(),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              // A pílula cresce de largura ao selecionar, a mesma ideia do
+              // indicador do NavigationBar do Material.
+              AnimatedContainer(
+                duration: const Duration(milliseconds: 220),
+                curve: Curves.easeOut,
+                width: selected ? 52 : 32,
+                height: 28,
+                decoration: BoxDecoration(
+                  color: selected ? scheme.primary : Colors.transparent,
+                  borderRadius: BorderRadius.circular(AppRadius.pill),
+                ),
+                child: Icon(selected ? destination.selectedIcon : destination.icon, size: 20, color: iconColor),
               ),
-            ),
+              const SizedBox(height: AppSpacing.xxs),
+              Text(
+                destination.label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+                  color: selected ? scheme.onSurface : scheme.onSurfaceVariant,
+                ),
+              ),
+            ],
           ),
         ),
       ),

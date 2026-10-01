@@ -31,7 +31,7 @@ class BalanceCard extends StatefulWidget {
 
   /// Cartões que aparecem por trás, do maior para o menor. Só os dois
   /// primeiros são desenhados: mais que isso vira uma pilha ilegível.
-  final List<CardShare> cards;
+  final List<ShareSlice> cards;
 
   final double? goalProgress;
   final String? goalLabel;
@@ -155,7 +155,7 @@ class _BalanceCardState extends State<BalanceCard> {
 class _CardFace extends StatelessWidget {
   const _CardFace({required this.card});
 
-  final CardShare card;
+  final ShareSlice card;
 
   @override
   Widget build(BuildContext context) {

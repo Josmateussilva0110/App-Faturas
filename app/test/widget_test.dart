@@ -296,4 +296,42 @@ void main() {
     // Shown once as the name, not duplicated on the line below it.
     expect(find.text('semnome@email.com'), findsOneWidget);
   });
+
+  testWidgets('Depositar cria salário pelo diálogo do "+"', (tester) async {
+    final adapter = FakeAdapter((options) {
+      if (options.method == 'POST' && options.path.contains('/salaries')) {
+        return jsonBody({'success': true, 'data': {'id': 's2'}}, 201);
+      }
+      return defaultHandler(options);
+    });
+    api.httpClientAdapter = adapter;
+
+    await _pumpApp(tester);
+    await _signIn(tester);
+
+    await tester.tap(find.text('Depositar'));
+    await tester.pumpAndSettle();
+
+    final add = find.byTooltip('Adicionar salário');
+    await tester.dragUntilVisible(add, find.byType(ListView), const Offset(0, -200));
+    await tester.pumpAndSettle();
+    await tester.tap(add);
+    await tester.pumpAndSettle();
+
+    // Abre vazio, com o título de criação — não o de edição.
+    expect(find.text('Novo salário'), findsOneWidget);
+    final fields = find.descendant(of: find.byType(AlertDialog), matching: find.byType(TextField));
+    await tester.enterText(fields.at(0), 'Freela');
+    await tester.enterText(fields.at(1), '800');
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(FilledButton, 'Salvar'));
+    await tester.pumpAndSettle();
+
+    final post = adapter.calls.singleWhere((c) => c.method == 'POST' && c.path.contains('/salaries'));
+    expect(post.data, containsPair('name', 'Freela'));
+    expect(find.text('Freela'), findsOneWidget);
+
+    await tester.pump(const Duration(seconds: 3));
+    await tester.pumpAndSettle();
+  });
 }

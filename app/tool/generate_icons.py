@@ -1,8 +1,8 @@
 """Gera os ícones do app Faturas a partir de código, não de um PNG editado à mão.
 
-A marca é um recibo com um selo de "confere" — o recibo é o que o app mostra,
-o selo é a conferência contra a fatura do banco, que é o que ele faz de
-diferente.
+A marca são três cartões em leque: os cartões que o app confere, cada um na
+sua cor — a mesma cor que o cartão ganha dentro do app. O fundo é o grafite
+do card de destaque.
 
 Rodar depois de mexer na geometria:
 
@@ -12,60 +12,88 @@ Saída (todos sobrescritos):
   android/.../mipmap-*/ic_launcher.png             ícone legado, com a própria moldura
   android/.../mipmap-*/ic_launcher_foreground.png  camada de frente do adaptive icon
   android/.../mipmap-*/ic_launcher_monochrome.png  silhueta para o tema do Android 13+
-  ../play_store_512.png                            arte para a Play Store
+  branding/icon_512.png                            arte para a Play Store
+  assets/illustrations/app_mark.svg                logo da tela de boas-vindas
 
 Não há rasterizador de SVG nesta máquina (rsvg/inkscape/ImageMagick), então o
 desenho é feito no PIL e ampliado 4x antes de reduzir — é o que dá a borda
 suave sem depender de ferramenta externa.
 """
 
+import math
 from pathlib import Path
 
 from PIL import Image, ImageDraw
 
 # ── Paleta ───────────────────────────────────────────────────────────────
-# O azul é o mesmo `AppColors.seed` do app; o verde é o `iconTint(hueSavings)`,
-# a cor que a conferência já usa no estado "Confere".
-BRAND = (41, 124, 239, 255)
-PAPER = (255, 255, 255, 255)
-INK = (41, 124, 239, 255)
-BADGE = (29, 158, 117, 255)
+# O fundo é `AppColors.heroLight`. Os cartões saem de
+# `AppColors.avatarBackground(hue)` no tema claro — HSL(hue, 62%, 48%) —
+# com os matizes que o app oferece no cadastro do cartão; o chip é o mesmo
+# dourado dos cartões da carteira na conferência.
+BRAND = (30, 30, 33, 255)
+CARD_COLORS = [(47, 173, 198, 255), (198, 112, 47, 255), (178, 47, 198, 255)]
+CHIP = (233, 208, 138, 255)
 
 SS = 4  # supersampling: desenha grande, reduz com LANCZOS
 
 # ── Geometria, num quadro de 100x100 ─────────────────────────────────────
 # Tudo é proporção. Mudar um número aqui vale para todos os tamanhos.
-# O recibo é mais alto que largo, como um de verdade, e ocupa a metade
-# esquerda; o selo entra pelo canto inferior direito. As duas formas juntas
-# preenchem o quadro, o que evita canto vazio.
-RECEIPT = (1.0, 0.0, 48.0, 68.0)   # x0, y0, x1, y1
-RECEIPT_RADIUS = 6.0
-# Poucos dentes largos leem como onda; quatro mais fundos leem como
-# recibo destacado. Abaixo de mdpi eles somem de qualquer jeito, e a
-# silhueta ainda funciona.
-TEETH = 4
-TOOTH_DEPTH = 11.0
+# Cartões do fundo para a frente: centro, ângulo em graus. O leque abre no
+# sentido horário, então o da frente é o mais inclinado para a direita e o
+# chip dele fica à mostra.
+CARD_W, CARD_H, CARD_RADIUS = 58.0, 38.0, 6.5
+CARDS = [((41.0, 39.0), -22.0), ((48.0, 48.0), -7.0), ((56.0, 58.0), 9.0)]
 
-LINES = [(9.0, 15.0, 25.0, 6.5), (9.0, 29.0, 31.0, 6.5)]  # x, y, w, h
+# Vão entre um cartão e o de trás. Sem ele, no tamanho de 48px as três cores
+# encostam e o leque lê como uma mancha só; no monocromático é ele que
+# desenha o contorno de cada cartão.
+GAP = 2.6
 
-BADGE_CENTER = (68.0, 68.0)
-BADGE_RADIUS = 26.0
-BADGE_RING = 6.0
-CHECK = [(56.0, 68.5), (65.0, 77.5), (81.0, 58.0)]
-CHECK_WIDTH = 8.5
+# Chip no cartão da frente, em coordenadas do próprio cartão (centro = 0,0).
+CHIP_CENTER = (-16.0, 2.0)
+CHIP_W, CHIP_H, CHIP_RADIUS = 11.0, 8.5, 2.0
+
+# Quantos pontos por canto arredondado no polígono do PIL.
+ARC_STEPS = 10
+
+
+def _rounded_rect_poly(center, w, h, r, angle_deg, local_center=(0.0, 0.0)):
+    """Contorno de um retângulo arredondado girado, como lista de pontos no
+    quadro 100x100. [local_center] desloca o retângulo no sistema do cartão
+    — é como o chip acompanha a rotação do cartão da frente."""
+    cx, cy = center
+    a = math.radians(angle_deg)
+    cos_a, sin_a = math.cos(a), math.sin(a)
+    lx, ly = local_center
+    hw, hh = w / 2, h / 2
+    corners = [(hw - r, -hh + r, -90), (hw - r, hh - r, 0), (-hw + r, hh - r, 90), (-hw + r, -hh + r, 180)]
+    points = []
+    for ox, oy, start in corners:
+        for i in range(ARC_STEPS + 1):
+            t = math.radians(start + 90 * i / ARC_STEPS)
+            x = lx + ox + r * math.cos(t)
+            y = ly + oy + r * math.sin(t)
+            points.append((cx + x * cos_a - y * sin_a, cy + x * sin_a + y * cos_a))
+    return points
+
+
+def _farthest_from_center():
+    """O ponto da marca mais longe do centro do quadro, em unidades do quadro."""
+    return max(
+        math.hypot(x - 50, y - 50)
+        for center, angle in CARDS
+        for x, y in _rounded_rect_poly(center, CARD_W + 2 * GAP, CARD_H + 2 * GAP, CARD_RADIUS + GAP, angle)
+    )
+
 
 # Quanto do canvas de 108dp a marca ocupa na camada de frente.
 #
 # O sistema recorta o adaptive icon com uma máscara que o fabricante escolhe
-# — círculo, squircle, gota — e só o círculo central de 66dp é garantido. O
-# ponto mais distante do centro nesta arte é o canto superior esquerdo do
-# recibo, a 70 unidades do quadro de 100; para ele caber no raio de 33dp, a
-# marca não passa de 47dp. Daí 0.44, com uma folga para o efeito de parallax
-# que alguns launchers aplicam.
-#
-# Conferir com `python3 tool/preview_icons.py` depois de mexer na geometria:
-# uma composição mais diagonal empurra esse número para baixo.
-ADAPTIVE_MARK_FRACTION = 0.44
+# — círculo, squircle, gota — e só o círculo central de 66dp é garantido.
+# Calculado da geometria em vez de fixo: o ponto mais distante do leque tem
+# de caber no raio de 33dp, com 5% de folga para o parallax que alguns
+# launchers aplicam. Conferir com `python3 tool/preview_icons.py`.
+ADAPTIVE_MARK_FRACTION = round(33 * 0.95 * 100 / (108 * _farthest_from_center()), 3)
 
 ANDROID_RES = Path("android/app/src/main/res")
 LEGACY_SIZES = {"mdpi": 48, "hdpi": 72, "xhdpi": 96, "xxhdpi": 144, "xxxhdpi": 192}
@@ -94,49 +122,28 @@ class Mark:
         return self.rect(cx - radius, cy - radius, cx + radius, cy + radius)
 
 
-def _teeth_cut(m):
-    """Polígono que recorta o serrilhado do rodapé do recibo."""
-    x0, _, x1, y1 = RECEIPT
-    step = (x1 - x0) / (TEETH * 2)
-    top = [
-        (x0 + i * step, y1 - TOOTH_DEPTH if i % 2 else y1)
-        for i in range(TEETH * 2 + 1)
-    ]
-    below = [(x1, y1 + TOOTH_DEPTH), (x0, y1 + TOOTH_DEPTH)]
-    return [m.p(x, y) for x, y in top + below]
-
-
 def _paint(draw, m, *, mono):
     """Desenha a marca. Em [mono] tudo vira uma silhueta só, com os vãos
     vazados — é o que o tema do Android 13+ pinta com a cor do sistema."""
-    paper = PAPER if not mono else (255, 255, 255, 255)
     hole = (0, 0, 0, 0)
+    gap = hole if mono else BRAND
+    white = (255, 255, 255, 255)
 
-    draw.rounded_rectangle(m.rect(*RECEIPT), radius=m.n(RECEIPT_RADIUS), fill=paper,
-                           corners=(True, True, False, False))
-    draw.polygon(_teeth_cut(m), fill=hole)
+    for (center, angle), color in zip(CARDS, CARD_COLORS):
+        # O vão primeiro, um pouco maior que o cartão: ele recorta o de trás.
+        draw.polygon([m.p(*pt) for pt in _rounded_rect_poly(
+            center, CARD_W + 2 * GAP, CARD_H + 2 * GAP, CARD_RADIUS + GAP, angle)], fill=gap)
+        draw.polygon([m.p(*pt) for pt in _rounded_rect_poly(
+            center, CARD_W, CARD_H, CARD_RADIUS, angle)], fill=white if mono else color)
 
-    for x, y, w, h in LINES:
-        draw.rounded_rectangle(m.rect(x, y, x + w, y + h), radius=m.n(h / 2),
-                               fill=hole if mono else INK)
-
-    # O anel é um vão no mono e uma borda branca no colorido: nos dois casos
-    # é ele que separa o selo do recibo por baixo.
-    draw.ellipse(m.circle(BADGE_CENTER, BADGE_RADIUS + BADGE_RING),
-                 fill=hole if mono else PAPER)
-    draw.ellipse(m.circle(BADGE_CENTER, BADGE_RADIUS), fill=paper if mono else BADGE)
-    check_color = hole if mono else PAPER
-    draw.line([m.p(*pt) for pt in CHECK], fill=check_color,
-              width=round(m.n(CHECK_WIDTH)), joint="curve")
-
-    # `joint="curve"` arredonda só o cotovelo; as duas pontas ficam retas e
-    # precisam de um disco cada uma.
-    for point in (CHECK[0], CHECK[-1]):
-        draw.ellipse(m.circle(point, CHECK_WIDTH / 2), fill=check_color)
+    front_center, front_angle = CARDS[-1]
+    draw.polygon([m.p(*pt) for pt in _rounded_rect_poly(
+        front_center, CHIP_W, CHIP_H, CHIP_RADIUS, front_angle, local_center=CHIP_CENTER)],
+        fill=hole if mono else CHIP)
 
 
-def render(size, *, framed, mono=False, mark_fraction=0.62):
-    """Uma arte quadrada de [size] px. [framed] desenha a moldura azul do
+def render(size, *, framed, mono=False, mark_fraction=0.84):
+    """Uma arte quadrada de [size] px. [framed] desenha a moldura grafite do
     ícone legado; sem ela o fundo fica transparente, que é o que as camadas
     do adaptive icon precisam."""
     big = size * SS
@@ -161,66 +168,38 @@ def _fmt(value):
     return f"{value:.2f}".rstrip("0").rstrip(".")
 
 
-def _receipt_path():
-    """Contorno do recibo: cantos de cima arredondados, rodapé serrilhado."""
-    x0, y0, x1, y1 = RECEIPT
-    r = RECEIPT_RADIUS
-    step = (x1 - x0) / (TEETH * 2)
-
-    parts = [
-        f"M{_fmt(x0 + r)} {_fmt(y0)}",
-        f"H{_fmt(x1 - r)}",
-        f"A{_fmt(r)} {_fmt(r)} 0 0 1 {_fmt(x1)} {_fmt(y0 + r)}",
-        f"V{_fmt(y1)}",
-    ]
-    # Volta pelo rodapé, da direita para a esquerda.
-    for i in range(TEETH * 2 - 1, -1, -1):
-        x = x0 + i * step
-        y = y1 - TOOTH_DEPTH if i % 2 else y1
-        parts.append(f"L{_fmt(x)} {_fmt(y)}")
-    parts.append(f"V{_fmt(y0 + r)}")
-    parts.append(f"A{_fmt(r)} {_fmt(r)} 0 0 1 {_fmt(x0 + r)} {_fmt(y0)}")
-    parts.append("Z")
-    return "".join(parts)
+def _hex(rgba):
+    return "#%02X%02X%02X" % rgba[:3]
 
 
-def svg(mark_fraction=0.62):
-    """A marca com a moldura azul, no mesmo enquadramento do ícone legado."""
+def svg(mark_fraction=0.84):
+    """A marca com a moldura grafite, no mesmo enquadramento do ícone legado."""
     side = 100 * mark_fraction
     off = (100 - side) / 2
     k = side / 100.0
 
-    def px(x, y):
-        return _fmt(off + x * k), _fmt(off + y * k)
+    def rect(center, w, h, r, angle, fill, local=(0.0, 0.0)):
+        cx, cy = center
+        lx, ly = local
+        return (f'<rect x="{_fmt(cx + lx - w / 2)}" y="{_fmt(cy + ly - h / 2)}" width="{_fmt(w)}"'
+                f' height="{_fmt(h)}" rx="{_fmt(r)}" fill="{fill}"'
+                f' transform="rotate({_fmt(angle)} {_fmt(cx)} {_fmt(cy)})"/>')
 
-    def hex_of(rgba):
-        return "#%02X%02X%02X" % rgba[:3]
+    shapes = []
+    for (center, angle), color in zip(CARDS, CARD_COLORS):
+        shapes.append(rect(center, CARD_W + 2 * GAP, CARD_H + 2 * GAP, CARD_RADIUS + GAP, angle, _hex(BRAND)))
+        shapes.append(rect(center, CARD_W, CARD_H, CARD_RADIUS, angle, _hex(color)))
+    front_center, front_angle = CARDS[-1]
+    shapes.append(rect(front_center, CHIP_W, CHIP_H, CHIP_RADIUS, front_angle, _hex(CHIP), local=CHIP_CENTER))
 
-    lines = []
-    for x, y, w, h in LINES:
-        lx, ly = px(x, y)
-        lines.append(
-            f'<rect x="{lx}" y="{ly}" width="{_fmt(w * k)}" height="{_fmt(h * k)}"'
-            f' rx="{_fmt(h * k / 2)}" fill="{hex_of(INK)}"/>'
-        )
-
-    bx, by = px(*BADGE_CENTER)
-    cx0, cy0 = px(*CHECK[0])
-    cx1, cy1 = px(*CHECK[1])
-    cx2, cy2 = px(*CHECK[2])
-
+    body = "\n".join("    " + shape for shape in shapes)
     return f"""<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" fill="none">
   <!-- Gerado por tool/generate_icons.py. Não editar à mão: as mesmas
        constantes desenham os PNGs do launcher. -->
-  <rect width="100" height="100" rx="22" fill="{hex_of(BRAND)}"/>
+  <rect width="100" height="100" rx="22" fill="{_hex(BRAND)}"/>
   <g transform="translate({_fmt(off)} {_fmt(off)}) scale({_fmt(k)})">
-    <path d="{_receipt_path()}" fill="{hex_of(PAPER)}"/>
+{body}
   </g>
-{chr(10).join("  " + line for line in lines)}
-  <circle cx="{bx}" cy="{by}" r="{_fmt((BADGE_RADIUS + BADGE_RING) * k)}" fill="{hex_of(PAPER)}"/>
-  <circle cx="{bx}" cy="{by}" r="{_fmt(BADGE_RADIUS * k)}" fill="{hex_of(BADGE)}"/>
-  <path d="M{cx0} {cy0}L{cx1} {cy1}L{cx2} {cy2}" stroke="{hex_of(PAPER)}"
-        stroke-width="{_fmt(CHECK_WIDTH * k)}" stroke-linecap="round" stroke-linejoin="round"/>
 </svg>
 """
 

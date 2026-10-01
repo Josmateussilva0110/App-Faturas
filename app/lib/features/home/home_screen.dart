@@ -5,7 +5,7 @@ import '../../core/theme/app_spacing.dart';
 import '../../core/toast/app_toast.dart';
 import '../../core/utils/formatters.dart';
 import '../../state/app_state.dart';
-import '../../widgets/card_split_bar.dart';
+import '../../widgets/split_bar.dart';
 import '../../widgets/empty_state.dart';
 import '../../widgets/month_totals_chart.dart';
 import '../../widgets/purchase_list_card.dart';
@@ -73,7 +73,7 @@ class HomeScreen extends StatelessWidget {
                     Expanded(
                       child: SummaryBlock(
                         title: 'Por cartão',
-                        child: CardSplitBar(shares: shares, total: total),
+                        child: SplitBar(shares: shares, total: total),
                       ),
                     ),
                     const SizedBox(width: AppSpacing.md),

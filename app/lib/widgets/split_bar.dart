@@ -6,24 +6,31 @@ import '../core/theme/app_typography.dart';
 import '../core/utils/formatters.dart';
 import '../state/app_state.dart';
 
-/// Quanto cada cartão pesa num mês: uma barra em fatias, na cor de cada
-/// cartão, e a legenda embaixo.
+/// Uma barra em fatias, cada uma na sua cor, com a legenda embaixo: quanto
+/// cada cartão pesa no mês, ou para onde vai o salário.
 ///
-/// Com [fullLegend] a legenda lista todos os cartões com o valor; sem ela,
-/// só o maior e a porcentagem — o que cabe num bloco de meia largura.
-class CardSplitBar extends StatelessWidget {
-  const CardSplitBar({super.key, required this.shares, required this.total, this.fullLegend = false});
+/// Com [fullLegend] a legenda lista todas as fatias com o valor; sem ela,
+/// só a maior e a porcentagem — o que cabe num bloco de meia largura.
+class SplitBar extends StatelessWidget {
+  const SplitBar({
+    super.key,
+    required this.shares,
+    required this.total,
+    this.fullLegend = false,
+    this.emptyMessage = 'Nada lançado neste mês.',
+  });
 
-  final List<CardShare> shares;
+  final List<ShareSlice> shares;
   final double total;
   final bool fullLegend;
+  final String emptyMessage;
 
   @override
   Widget build(BuildContext context) {
     final palette = context.palette;
 
     if (shares.isEmpty || total <= 0) {
-      return Text('Nada lançado neste mês.', style: context.text.caption);
+      return Text(emptyMessage, style: context.text.caption);
     }
 
     return Column(
@@ -74,7 +81,7 @@ class CardSplitBar extends StatelessWidget {
 class _LegendItem extends StatelessWidget {
   const _LegendItem({required this.share, required this.text, this.expand = false});
 
-  final CardShare share;
+  final ShareSlice share;
   final String text;
 
   /// Ocupa a largura toda e corta com reticências, para o bloco estreito.

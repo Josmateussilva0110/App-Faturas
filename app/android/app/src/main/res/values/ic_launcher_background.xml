@@ -1,8 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Fundo do adaptive icon. É cor, não PNG: o sistema estica a camada de
      fundo além dos 108dp para o efeito de parallax, e uma cor chapada não
-     tem como aparecer serrilhada nesse esticamento. Mesmo `AppColors.seed`
-     do app. -->
+     tem como aparecer serrilhada nesse esticamento. Mesmo grafite do card
+     de destaque do app (`AppColors.heroLight`) e do `BRAND` de
+     tool/generate_icons.py. -->
 <resources>
-    <color name="ic_launcher_background">#297CEF</color>
+    <color name="ic_launcher_background">#1E1E21</color>
 </resources>

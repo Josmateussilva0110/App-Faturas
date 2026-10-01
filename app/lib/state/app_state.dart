@@ -23,9 +23,10 @@ class PersonSummary {
   final double total;
 }
 
-/// Fatia de um cartão no total de um mês.
-class CardShare {
-  const CardShare({required this.name, required this.hue, required this.total});
+/// Uma fatia de um total, com nome e cor: um cartão no total do mês, ou
+/// uma parte do salário em Depositar.
+class ShareSlice {
+  const ShareSlice({required this.name, required this.hue, required this.total});
   final String name;
   final int hue;
   final double total;
@@ -360,10 +361,10 @@ class AppState extends ChangeNotifier {
   /// Agrupa pelo `cardId` da compra, não pela lista de cartões: compra de
   /// cartão apagado ainda cai na fatura e precisa entrar na soma, senão as
   /// fatias não fecham com [totalFor].
-  List<CardShare> cardSharesFor(int offset) {
+  List<ShareSlice> cardSharesFor(int offset) {
     return [
       for (final entry in totalsByCardFor(offset).entries)
-        CardShare(name: cardName(entry.key), hue: cardHue(entry.key), total: entry.value),
+        ShareSlice(name: cardName(entry.key), hue: cardHue(entry.key), total: entry.value),
     ]..sort((a, b) => b.total.compareTo(a.total));
   }
 

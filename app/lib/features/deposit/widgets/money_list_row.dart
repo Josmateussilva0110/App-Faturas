@@ -2,21 +2,20 @@ import 'package:flutter/material.dart';
 
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
+import '../../../widgets/grouped_list_card.dart';
+import '../../../widgets/icon_badge.dart';
 
-/// One salary or expense row: name, formatted value, remove button, and an
-/// optional meta line (the running balance under each expense). Shared by
-/// the salaries and expenses lists on the Deposit screen.
+/// Uma linha de salário ou despesa, dentro de um [GroupedListCard]: ícone na
+/// cor da seção, nome, valor e o botão de remover, com uma linha opcional
+/// embaixo (o saldo que sobra depois de cada despesa).
 ///
-/// Tapping the row edits it; the close button removes it. The two gestures
-/// stay separate so a mistyped value doesn't have to be deleted and retyped.
-///
-/// A linha não tem fundo próprio. Era um card cinza dentro do card branco da
-/// seção — card dentro de card, e o cinza pesava mais que o valor em
-/// dinheiro, que é o dado da linha. Quem separa uma linha da outra agora é
-/// um divisor fino, e a superfície branca é uma só.
+/// Tocar na linha edita; o X remove. Os dois gestos ficam separados para um
+/// valor digitado errado não precisar ser apagado e lançado de novo.
 class MoneyListRow extends StatelessWidget {
   const MoneyListRow({
     super.key,
+    required this.icon,
+    required this.color,
     required this.name,
     required this.valueLabel,
     required this.onRemove,
@@ -24,17 +23,14 @@ class MoneyListRow extends StatelessWidget {
     this.meta,
   });
 
-  /// Largura fixa do botão de remover. Exposta para o total no cabeçalho do
-  /// card reservar o mesmo espaço e ficar alinhado com os valores das linhas.
-  static const double trailingWidth = 28;
-
+  final IconData icon;
+  final Color color;
   final String name;
   final String valueLabel;
   final String? meta;
   final VoidCallback onRemove;
 
-  /// Opens the edit dialog when the row is tapped. Null leaves the row inert
-  /// to taps.
+  /// Abre a edição ao tocar na linha. Nula deixa a linha inerte.
   final VoidCallback? onEdit;
 
   @override
@@ -45,37 +41,34 @@ class MoneyListRow extends StatelessWidget {
     return InkWell(
       onTap: onEdit,
       child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: AppSpacing.smPlus),
+        padding: GroupedListCard.rowPadding.copyWith(right: AppSpacing.xs),
         child: Row(
           children: [
+            IconBadge(icon: icon, color: color, size: 40, iconSize: 18),
+            const SizedBox(width: AppSpacing.md),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Text(name, style: text.body, overflow: TextOverflow.ellipsis),
+                  Text(name, style: text.title, overflow: TextOverflow.ellipsis),
                   if (meta != null) ...[
                     const SizedBox(height: AppSpacing.xxs),
                     // Secundário de propósito: primeiro o usuário quer ver
                     // quanto aquela linha custa, e só depois o que sobrou.
-                    Text(meta!, style: text.caption.copyWith(fontSize: 10)),
+                    Text(meta!, style: text.caption, overflow: TextOverflow.ellipsis),
                   ],
                 ],
               ),
             ),
-            const SizedBox(width: AppSpacing.smPlus),
-            Text(valueLabel, style: text.body.copyWith(fontWeight: FontWeight.w700)),
-            SizedBox(
-              width: trailingWidth,
-              child: IconButton(
-                onPressed: onRemove,
-                icon: const Icon(Icons.close, size: 16),
-                color: scheme.error,
-                tooltip: 'Remover',
-                constraints: const BoxConstraints(minWidth: trailingWidth, minHeight: trailingWidth),
-                padding: EdgeInsets.zero,
-                visualDensity: VisualDensity.compact,
-              ),
+            const SizedBox(width: AppSpacing.sm),
+            Text(valueLabel, style: text.money),
+            IconButton(
+              onPressed: onRemove,
+              icon: const Icon(Icons.close, size: 18),
+              color: scheme.onSurfaceVariant,
+              tooltip: 'Remover',
+              visualDensity: VisualDensity.compact,
             ),
           ],
         ),

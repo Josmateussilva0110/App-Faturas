@@ -12,7 +12,7 @@ import '../../widgets/month_selector.dart';
 import '../../widgets/money_entry_dialog.dart';
 import '../../widgets/purchase_list_card.dart';
 import '../../widgets/section_label.dart';
-import '../../widgets/card_split_bar.dart';
+import '../../widgets/split_bar.dart';
 import '../../widgets/summary_block.dart';
 import '../purchase_form/edit_purchase_dialog.dart';
 import 'widgets/month_overview_card.dart';
@@ -102,7 +102,7 @@ class MonthlyScreen extends StatelessWidget {
               const SizedBox(height: AppSpacing.md),
               SummaryBlock(
                 title: 'Por cartão',
-                child: CardSplitBar(
+                child: SplitBar(
                   shares: appState.cardSharesFor(appState.monthOffset),
                   total: total,
                   fullLegend: true,

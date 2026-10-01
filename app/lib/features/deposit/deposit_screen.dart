@@ -5,22 +5,21 @@ import 'package:provider/provider.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_spacing.dart';
 import '../../core/theme/app_typography.dart';
-import '../../core/toast/app_toast.dart';
 import '../../core/utils/formatters.dart';
 import '../../models/expense.dart';
 import '../../models/salary.dart';
 import '../../state/app_state.dart';
 import '../../widgets/confirm_delete_dialog.dart';
 import '../../widgets/empty_state.dart';
-import '../../widgets/form_section_card.dart';
-import '../../widgets/labeled_amount.dart';
+import '../../widgets/grouped_list_card.dart';
 import '../../widgets/month_selector.dart';
 import '../../widgets/money_entry_dialog.dart';
-import '../../widgets/section_label.dart';
-import '../../widgets/total_card.dart';
-import 'widgets/add_money_row.dart';
+import '../../widgets/split_bar.dart';
+import '../../widgets/summary_block.dart';
 import 'widgets/deposit_export_dialog.dart';
 import 'widgets/money_list_row.dart';
+import 'widgets/salary_split.dart';
+import 'widgets/savings_hero.dart';
 
 /// Full-screen salary / fixed-expenses calculator: how much is left to save
 /// after a given month's credit card bill and expenses are paid. Salaries
@@ -35,52 +34,22 @@ class DepositScreen extends StatefulWidget {
 }
 
 class _DepositScreenState extends State<DepositScreen> {
-  final _salaryName = TextEditingController();
-  final _salaryValue = TextEditingController();
-  final _expenseName = TextEditingController();
-  final _expenseValue = TextEditingController();
-
   int _monthOffset = 0;
 
-  @override
-  void dispose() {
-    _salaryName.dispose();
-    _salaryValue.dispose();
-    _expenseName.dispose();
-    _expenseValue.dispose();
-    super.dispose();
-  }
-
+  // Criar abre o mesmo diálogo da edição. Eram dois pares de campos sempre
+  // abertos na tela, que pesavam mais que as próprias listas.
   Future<void> _addSalary() async {
-    final name = _salaryName.text.trim();
-    final value = parseMoney(_salaryValue.text);
-    if (name.isEmpty || value == null) {
-      // Antes o clique simplesmente não fazia nada. Agora que adicionar é
-      // uma chamada de rede, silêncio é indistinguível de falha de conexão.
-      AppToast.error('Informe um nome e um valor maior que zero.');
-      return;
-    }
+    final entry = await showMoneyEntryDialog(context, title: 'Novo salário');
+    if (entry == null || !mounted) return;
 
-    await context.read<AppState>().addSalary(name, value);
-    if (!mounted) return;
-
-    _salaryName.clear();
-    _salaryValue.clear();
+    await context.read<AppState>().addSalary(entry.name, entry.value);
   }
 
   Future<void> _addExpense() async {
-    final name = _expenseName.text.trim();
-    final value = parseMoney(_expenseValue.text);
-    if (name.isEmpty || value == null) {
-      AppToast.error('Informe um nome e um valor maior que zero.');
-      return;
-    }
+    final entry = await showMoneyEntryDialog(context, title: 'Nova despesa');
+    if (entry == null || !mounted) return;
 
-    await context.read<AppState>().addExpense(name, value);
-    if (!mounted) return;
-
-    _expenseName.clear();
-    _expenseValue.clear();
+    await context.read<AppState>().addExpense(entry.name, entry.value);
   }
 
   /// Excluir passa pela mesma confirmação de Cartões e Compras — aqui a
@@ -184,149 +153,86 @@ class _DepositScreenState extends State<DepositScreen> {
                 onChanged: (value) => setState(() => _monthOffset = value),
               ),
               const SizedBox(height: AppSpacing.lg),
-              FormSectionCard(
+              SavingsHero(amount: guardar, rate: savingsRate),
+              const SizedBox(height: AppSpacing.md),
+              SummaryBlock(
+                title: 'Para onde vai o salário',
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    SectionLabel('Salários', icon: Icons.payments_outlined, iconColor: salaryColor),
-                    const SizedBox(height: AppSpacing.sm),
-                    if (appState.salaries.isEmpty)
-                      const EmptyState(
-                        message: 'Nenhum salário lançado.',
-                        icon: Icons.payments_outlined,
-                      )
-                    else
-                      // Divisor entre as linhas, não espaço: sem o fundo
-                      // cinza que elas tinham, é a régua que diz onde uma
-                      // acaba e a outra começa.
-                      for (var i = 0; i < appState.salaries.length; i++) ...[
-                        if (i > 0) const Divider(height: 1),
-                        MoneyListRow(
-                          name: appState.salaries[i].name,
-                          valueLabel: formatMoney(appState.salaries[i].value),
-                          onEdit: () => _editSalary(appState.salaries[i]),
-                          onRemove: () => _removeSalary(appState.salaries[i]),
-                        ),
-                      ],
-                    const SizedBox(height: AppSpacing.md),
-                    AddMoneyRow(
-                      nameController: _salaryName,
-                      valueController: _salaryValue,
-                      onAdd: _addSalary,
-                      accentColor: salaryColor,
+                    SplitBar(
+                      shares: salarySplit(card: ownTotal, expenses: appState.totalExpenses, savings: guardar),
+                      total: appState.totalSalaries,
+                      fullLegend: true,
+                      emptyMessage: 'Lance um salário para ver a divisão.',
                     ),
+                    if (appState.totalSalaries > 0) ...[
+                      const SizedBox(height: AppSpacing.md),
+                      Text(
+                        'De ${formatMoney(appState.totalSalaries)} de salário no mês',
+                        style: context.text.caption,
+                      ),
+                    ],
                   ],
                 ),
               ),
-              const SizedBox(height: AppSpacing.lg),
-              FormSectionCard(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    SectionLabel('Resumo', icon: Icons.calculate_outlined, iconColor: scheme.primary),
-                    const SizedBox(height: AppSpacing.lg),
-                    // Empilhado, e não rótulo à esquerda com valor à direita:
-                    // é o mesmo bloco do card de conferência da tela Meses,
-                    // então as duas telas apresentam número do mesmo jeito.
-                    LabeledAmount(
-                      label: 'Total de salários',
-                      value: formatMoney(appState.totalSalaries),
+              const SizedBox(height: AppSpacing.md),
+              GroupedListCard(
+                title: 'Salários',
+                trailing: _AddButton(tooltip: 'Adicionar salário', onPressed: _addSalary),
+                empty: const EmptyState(message: 'Nenhum salário lançado.', icon: Icons.payments_outlined),
+                children: [
+                  for (final salary in appState.salaries)
+                    MoneyListRow(
+                      icon: Icons.payments_outlined,
                       color: salaryColor,
+                      name: salary.name,
+                      valueLabel: formatMoney(salary.value),
+                      onEdit: () => _editSalary(salary),
+                      onRemove: () => _removeSalary(salary),
                     ),
-                    const SizedBox(height: AppSpacing.md),
-                    LabeledAmount(
-                      label: 'Crédito no cartão',
-                      value: '- ${formatMoney(ownTotal)}',
-                      color: scheme.error,
-                    ),
-                    const Divider(height: AppSpacing.xl),
-                    LabeledAmount(
-                      label: 'Saldo após o cartão',
-                      value: formatMoney(afterCredit),
-                      // Verde quando sobra, vermelho quando falta: a cor diz
-                      // o sinal do número, que é o que se quer saber aqui.
-                      color: afterCredit < 0 ? scheme.error : salaryColor,
-                      emphasized: true,
-                    ),
-                  ],
-                ),
+                ],
               ),
-              const SizedBox(height: AppSpacing.lg),
-              FormSectionCard(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Row(
-                      children: [
-                        SectionLabel('Despesas', icon: Icons.trending_down, iconColor: expenseColor),
-                        const Spacer(),
-                        if (expenseRows.isNotEmpty) ...[
-                          Text(
-                            formatMoney(appState.totalExpenses),
-                            style: context.text.body.copyWith(
-                              fontWeight: FontWeight.w700,
-                              color: scheme.error,
-                            ),
-                          ),
-                          // Mesmo espaço do botão de remover das linhas, para
-                          // o total cair na coluna dos valores.
-                          const SizedBox(width: MoneyListRow.trailingWidth),
-                        ],
-                      ],
+              const SizedBox(height: AppSpacing.md),
+              GroupedListCard(
+                title: 'Despesas fixas',
+                trailing: _AddButton(tooltip: 'Adicionar despesa', onPressed: _addExpense),
+                empty: const EmptyState(message: 'Nenhuma despesa fixa lançada.', icon: Icons.trending_down),
+                children: [
+                  for (final row in expenseRows)
+                    MoneyListRow(
+                      icon: Icons.receipt_outlined,
+                      color: expenseColor,
+                      name: row.expense.name,
+                      valueLabel: '- ${formatMoney(row.expense.value)}',
+                      meta: 'Saldo restante: ${formatMoney(row.runningBalance)}',
+                      onEdit: () => _editExpense(row.expense),
+                      onRemove: () => _removeExpense(row.expense),
                     ),
-                    const SizedBox(height: AppSpacing.sm),
-                    if (expenseRows.isEmpty)
-                      const EmptyState(
-                        message: 'Nenhuma despesa fixa lançada.',
-                        icon: Icons.trending_down,
-                      )
-                    else
-                      for (var i = 0; i < expenseRows.length; i++) ...[
-                        if (i > 0) const Divider(height: 1),
-                        MoneyListRow(
-                          name: expenseRows[i].expense.name,
-                          valueLabel: '- ${formatMoney(expenseRows[i].expense.value)}',
-                          meta: 'Saldo restante: ${formatMoney(expenseRows[i].runningBalance)}',
-                          onEdit: () => _editExpense(expenseRows[i].expense),
-                          onRemove: () => _removeExpense(expenseRows[i].expense),
-                        ),
-                      ],
-                    const SizedBox(height: AppSpacing.md),
-                    AddMoneyRow(
-                      nameController: _expenseName,
-                      valueController: _expenseValue,
-                      onAdd: _addExpense,
-                      accentColor: expenseColor,
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: AppSpacing.xl),
-              Center(
-                child: FractionallySizedBox(
-                  widthFactor: 0.6,
-                  child: TotalCard(
-                    kicker: 'Guardar',
-                    value: formatMoney(guardar),
-                    meta: monthLabel,
-                    valueFontSize: 22,
-                    centered: true,
-                    negative: guardar < 0,
-                    detail: savingsRate == null
-                        ? null
-                        : guardar < 0
-                            ? 'Passa do salário'
-                            : '${(savingsRate * 100).round()}% do salário',
-                  ),
-                ),
+                ],
               ),
             ],
           ),
         ),
       ),
+    );
+  }
+}
+
+/// O "+" no título de cada lista.
+class _AddButton extends StatelessWidget {
+  const _AddButton({required this.tooltip, required this.onPressed});
+
+  final String tooltip;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return IconButton.filledTonal(
+      onPressed: onPressed,
+      tooltip: tooltip,
+      icon: const Icon(Icons.add, size: 18),
+      visualDensity: VisualDensity.compact,
     );
   }
 }
